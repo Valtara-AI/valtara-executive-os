@@ -17,11 +17,17 @@ import { getDb, schema } from "../client";
 const hasDb = Boolean(process.env.DATABASE_URL);
 
 describe.skipIf(!hasDb)("external_actions HITL enforcement trigger", () => {
-  const db = getDb();
+  // getDb() throws if DATABASE_URL is unset, so it must stay inside a
+  // beforeAll/it callback (lazy, skipped along with the tests) rather than
+  // the describe body itself (which vitest always executes during
+  // collection, even under skipIf - that's what "0 test" + a thrown error
+  // instead of a clean skip actually means).
+  let db: ReturnType<typeof getDb>;
   let executiveId: string;
   let agentId: string;
 
   beforeAll(async () => {
+    db = getDb();
     const [executive] = await db
       .insert(schema.executives)
       .values({ name: "Test Exec", email: `test-${Date.now()}@example.com` })
