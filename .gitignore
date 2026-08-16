@@ -12,6 +12,7 @@ dist/
 build/
 out/
 *.tsbuildinfo
+next-env.d.ts
 
 # Logs
 *.log

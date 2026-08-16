@@ -1,0 +1,33 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["dom", "dom.iterable", "ES2022"],
+    "jsx": "preserve",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": ["./*"]
+    },
+    // Next.js apps are always a graph leaf (nothing imports FROM apps/web),
+    // so there's no reason for this to be a composite project - and it
+    // can't be one anyway: NextAuth v5's `auth` export has an inferred type
+    // that isn't portable to a .d.ts file (TS2742), which composite's
+    // forced declaration emit would require. noEmit is fine here since
+    // Next's own SWC compiler does the actual transpilation; tsc only
+    // typechecks.
+    "composite": false,
+    "declaration": false,
+    "declarationMap": false,
+    "noEmit": true,
+    "allowJs": true,
+    "incremental": true
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "exclude": ["node_modules", ".next", "dist"]
+}

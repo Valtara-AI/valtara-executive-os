@@ -1,0 +1,33 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Light palette (default). Dark palette overrides these under
+   [data-theme="dark"] (SAD §4.1: "theme toggled via data-theme attribute
+   on root element"). FR-DB-06 is Sprint 3 scope for the toggle UI itself,
+   but the token structure is scaffolded now so components never hardcode
+   colors. */
+:root {
+  --background: 0 0% 100%;
+  --foreground: 240 10% 4%;
+  --border: 240 6% 90%;
+  --primary: 243 75% 59%;
+  --primary-foreground: 0 0% 100%;
+  --muted: 240 5% 96%;
+  --muted-foreground: 240 4% 46%;
+}
+
+[data-theme="dark"] {
+  --background: 240 10% 4%;
+  --foreground: 0 0% 98%;
+  --border: 240 6% 20%;
+  --primary: 243 75% 65%;
+  --primary-foreground: 240 10% 4%;
+  --muted: 240 5% 12%;
+  --muted-foreground: 240 4% 64%;
+}
+
+body {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
