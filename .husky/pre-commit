@@ -1,0 +1,9 @@
+staged_env_files=$(git diff --cached --name-only --diff-filter=ACM | grep -E '(^|/)\.env(\..+)?$' | grep -v '\.env\.example$' || true)
+if [ -n "$staged_env_files" ]; then
+  echo "ERROR: refusing to commit .env file(s):"
+  echo "$staged_env_files"
+  echo "Secrets belong in .env only, and .env must never be committed (CLAUDE.md non-negotiable #3)."
+  exit 1
+fi
+
+npx lint-staged

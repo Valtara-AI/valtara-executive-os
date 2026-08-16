@@ -1,0 +1,12 @@
+{
+  "files": [],
+  "references": [
+    { "path": "packages/shared" },
+    { "path": "packages/database" },
+    { "path": "packages/ai-orchestrator" },
+    { "path": "packages/audit" },
+    { "path": "packages/integrations" },
+    { "path": "apps/api" },
+    { "path": "apps/web" }
+  ]
+}
