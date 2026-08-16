@@ -48,6 +48,29 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
+    # A Postgres service, not just the CI cache/lint jobs above, because
+    # several tests are gated on DATABASE_URL being set and otherwise only
+    # ever *skip* (see packages/database's external-action-trigger.test.ts
+    # and apps/api's engine.test.ts) - including the HITL-enforcement
+    # trigger test, which is the single most important test in the Sprint 1
+    # plan. Without this service, CI would report green while that
+    # invariant was never actually checked.
+    services:
+      postgres:
+        image: pgvector/pgvector:pg15
+        env:
+          POSTGRES_DB: vexos
+          POSTGRES_USER: vexos
+          POSTGRES_PASSWORD: vexos_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U vexos -d vexos"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://vexos:vexos_ci@localhost:5432/vexos
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -55,6 +78,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
       - run: npm ci
+      - run: npm run db:migrate
       - run: npm run test
 
   build:

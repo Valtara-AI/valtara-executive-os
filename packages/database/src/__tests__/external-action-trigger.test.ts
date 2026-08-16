@@ -46,6 +46,13 @@ describe.skipIf(!hasDb)("external_actions HITL enforcement trigger", () => {
   });
 
   afterAll(async () => {
+    // external_actions.agent_id is ON DELETE RESTRICT, not CASCADE -
+    // deliberately, so deleting an agent can never silently erase the
+    // record that it performed a real external action (see the schema
+    // comment in external-action.ts). That means this cleanup has to
+    // delete the row this suite created before it can delete the executive
+    // it cascades from.
+    await db.delete(schema.externalActions).where(eq(schema.externalActions.agentId, agentId));
     await db.delete(schema.executives).where(eq(schema.executives.id, executiveId));
   });
 
