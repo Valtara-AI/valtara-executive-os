@@ -1,6 +1,6 @@
 import { serve } from "@hono/node-server";
-import { createApp } from "./app";
-import { logger } from "./logger";
+import { createApp } from "./app.js";
+import { logger } from "./logger.js";
 
 const port = Number(process.env.PORT ?? 3001);
 const app = createApp();

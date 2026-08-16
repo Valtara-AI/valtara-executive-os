@@ -1,6 +1,6 @@
 import { integer, jsonb, pgTable, timestamp, uuid } from "drizzle-orm/pg-core";
-import { onboardingSessionStatusEnum } from "./enums";
-import { executives } from "./executive";
+import { onboardingSessionStatusEnum } from "./enums.js";
+import { executives } from "./executive.js";
 
 // Not in SRS §5.1's entity list, but required to make OA-SYS-01's "stateful
 // multi-turn conversation" requirement concrete and durable across server

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { FIRST_QUESTION_ID, QUESTION_BANK, type QuestionNode } from "./question-bank";
+import { FIRST_QUESTION_ID, QUESTION_BANK, type QuestionNode } from "./question-bank.js";
 import { MIN_ONBOARDING_QUESTIONS } from "@vex-os/shared";
 
 function walk(answers: Record<string, string>): string[] {

@@ -6,8 +6,8 @@
 // filled in with a real openai SDK call, at which point it becomes the
 // second (and only other) file permitted to import that SDK directly.
 
-import type { InferenceProvider, InferenceRequest, InferenceResult } from "../types";
-import { NotImplementedError } from "../types";
+import type { InferenceProvider, InferenceRequest, InferenceResult } from "../types.js";
+import { NotImplementedError } from "../types.js";
 
 export class OpenAIProvider implements InferenceProvider {
   constructor(private readonly model: string) {}

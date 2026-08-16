@@ -1,4 +1,4 @@
-import { getDb, schema } from "./client";
+import { getDb, schema } from "./client.js";
 
 async function main() {
   const db = getDb();

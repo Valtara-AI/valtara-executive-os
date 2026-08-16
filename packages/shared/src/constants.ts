@@ -4,8 +4,8 @@ import type {
   HitlStatus,
   OnboardingStatus,
   TaskStatus,
-} from "./types/entities";
-import type { Role } from "./types/auth";
+} from "./types/entities.js";
+import type { Role } from "./types/auth.js";
 
 export const ROLES: readonly Role[] = ["Executive", "Delegate", "Administrator"];
 

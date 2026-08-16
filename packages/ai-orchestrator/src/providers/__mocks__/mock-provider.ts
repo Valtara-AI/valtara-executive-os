@@ -2,7 +2,7 @@
 // needs a real ANTHROPIC_API_KEY. Not wired into the factory's env-driven
 // selection — tests construct it directly.
 
-import type { InferenceProvider, InferenceRequest, InferenceResult } from "../../types";
+import type { InferenceProvider, InferenceRequest, InferenceResult } from "../../types.js";
 
 export class MockProvider implements InferenceProvider {
   /** Queue of responses to return in order; falls back to `defaultResponse` once exhausted. */

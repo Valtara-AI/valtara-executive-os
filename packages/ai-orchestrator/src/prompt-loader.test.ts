@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { renderPrompt } from "./prompt-loader";
+import { renderPrompt } from "./prompt-loader.js";
 
 describe("renderPrompt", () => {
   it("renders onboarding/ask-question.v1.hbs with an acknowledgement", async () => {

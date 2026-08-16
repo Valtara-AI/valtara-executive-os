@@ -1,5 +1,5 @@
 import { jsonb, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
-import { onboardingStatusEnum } from "./enums";
+import { onboardingStatusEnum } from "./enums.js";
 
 // Field list per VEX-OS-SRS-001 §5.1 / CLAUDE.md "Key Data Entities".
 export const executives = pgTable("executives", {

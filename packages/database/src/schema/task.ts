@@ -1,7 +1,7 @@
 import { integer, jsonb, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
-import { taskStatusEnum } from "./enums";
-import { agents } from "./agent";
-import { executives } from "./executive";
+import { taskStatusEnum } from "./enums.js";
+import { agents } from "./agent.js";
+import { executives } from "./executive.js";
 
 // SRS §5.1: id, agent_id, executive_id, prompt, status, context_snapshot,
 // created_at, completed_at, retry_count.

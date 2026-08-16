@@ -1,6 +1,6 @@
 import { describe, expect, it, beforeAll } from "vitest";
 import { randomBytes } from "node:crypto";
-import { encryptField, decryptField } from "./crypto";
+import { encryptField, decryptField } from "./crypto.js";
 
 beforeAll(() => {
   process.env.DB_ENCRYPTION_KEY = randomBytes(32).toString("base64");

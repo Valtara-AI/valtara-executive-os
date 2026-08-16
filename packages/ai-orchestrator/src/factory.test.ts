@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { getInferenceProvider, getSecondaryProvider } from "./factory";
-import { AnthropicProvider } from "./providers/anthropic-provider";
+import { getInferenceProvider, getSecondaryProvider } from "./factory.js";
+import { AnthropicProvider } from "./providers/anthropic-provider.js";
 
 const ORIGINAL_ENV = { ...process.env };
 

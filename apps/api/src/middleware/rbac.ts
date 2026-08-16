@@ -11,7 +11,7 @@
 import type { Context, Next } from "hono";
 import type { Role } from "@vex-os/shared";
 import { fail } from "@vex-os/shared";
-import type { AuthedVariables } from "./jwt";
+import type { AuthedVariables } from "./jwt.js";
 
 export function requireRole(...allowedRoles: Role[]) {
   return async (c: Context<{ Variables: AuthedVariables }>, next: Next) => {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { MockProvider } from "./providers/__mocks__/mock-provider";
-import { completeStructured, ResponseValidationError } from "./response-validator";
+import { MockProvider } from "./providers/__mocks__/mock-provider.js";
+import { completeStructured, ResponseValidationError } from "./response-validator.js";
 
 const PersonSchema = z.object({ name: z.string(), age: z.number() });
 

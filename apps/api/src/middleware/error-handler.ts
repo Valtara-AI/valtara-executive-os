@@ -5,7 +5,7 @@
 import type { ErrorHandler } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { fail } from "@vex-os/shared";
-import { logger } from "../logger";
+import { logger } from "../logger.js";
 
 export const errorHandler: ErrorHandler = (err, c) => {
   if (err instanceof HTTPException) {

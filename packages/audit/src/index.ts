@@ -1,7 +1,7 @@
-import { AuditLogger, type AuditLogInput } from "./audit-logger";
+import { AuditLogger, type AuditLogInput } from "./audit-logger.js";
 
-export { AuditLogger } from "./audit-logger";
-export type { AuditLogInput } from "./audit-logger";
+export { AuditLogger } from "./audit-logger.js";
+export type { AuditLogInput } from "./audit-logger.js";
 
 const sharedLogger = new AuditLogger();
 

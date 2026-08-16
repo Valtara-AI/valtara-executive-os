@@ -83,6 +83,16 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
       - run: npm ci
+      # Workspace packages' package.json "main"/"types" point at dist/, not
+      # src/ (needed so a plain `node dist/index.js` in the production
+      # Docker image can resolve @vex-os/* without a TS runtime) - so
+      # cross-package imports (e.g. apps/api importing @vex-os/database)
+      # only resolve once dist/ actually exists. dist/ is gitignored, so
+      # every fresh checkout - this one included - needs a build first.
+      # `tsc --build` (not `npm run build`) deliberately skips apps/web's
+      # `next build` here - the backend test suite doesn't need it, and it's
+      # already covered by the separate Build job below.
+      - run: npx tsc --build
       - run: npm run db:migrate
       - run: npm run test
 

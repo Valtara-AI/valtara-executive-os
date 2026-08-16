@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { OpenAIProvider } from "./openai-provider";
-import { NotImplementedError } from "../types";
+import { OpenAIProvider } from "./openai-provider.js";
+import { NotImplementedError } from "../types.js";
 
 describe("OpenAIProvider", () => {
   it("throws NotImplementedError from complete()", async () => {

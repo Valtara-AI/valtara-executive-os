@@ -1,7 +1,7 @@
 import { pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
-import { hitlStatusEnum } from "./enums";
-import { taskOutputs } from "./task-output";
-import { executives } from "./executive";
+import { hitlStatusEnum } from "./enums.js";
+import { taskOutputs } from "./task-output.js";
+import { executives } from "./executive.js";
 
 // SRS §5.1: id, task_output_id, executive_id, status, original_output,
 // final_output, rejection_reason, actioned_at, actioned_by.

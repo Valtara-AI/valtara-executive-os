@@ -1,7 +1,7 @@
 // Stub — see openai-provider.ts for the rationale. Not exercised in Sprint 1.
 
-import type { InferenceProvider, InferenceRequest, InferenceResult } from "../types";
-import { NotImplementedError } from "../types";
+import type { InferenceProvider, InferenceRequest, InferenceResult } from "../types.js";
+import { NotImplementedError } from "../types.js";
 
 export class GoogleProvider implements InferenceProvider {
   constructor(private readonly model: string) {}

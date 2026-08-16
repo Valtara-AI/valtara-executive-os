@@ -1,5 +1,5 @@
 import { integer, jsonb, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
-import { executives } from "./executive";
+import { executives } from "./executive.js";
 
 // SRS §5.1: id, executive_id, version, time_drains[], delegation_candidates[],
 // communication_style, tools[], created_at.

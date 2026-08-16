@@ -1,6 +1,6 @@
 import { pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
-import { agents } from "./agent";
-import { hitlQueueItems } from "./hitl-queue-item";
+import { agents } from "./agent.js";
+import { hitlQueueItems } from "./hitl-queue-item.js";
 
 // The concrete database expression of DL-ARCH-005 ("no agent may trigger an
 // external action without an approved HITL record — enforced at the

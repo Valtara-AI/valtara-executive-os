@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { GoogleProvider } from "./google-provider";
-import { NotImplementedError } from "../types";
+import { GoogleProvider } from "./google-provider.js";
+import { NotImplementedError } from "../types.js";
 
 describe("GoogleProvider", () => {
   it("throws NotImplementedError from complete()", async () => {

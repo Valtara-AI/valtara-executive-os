@@ -1,6 +1,6 @@
 import { jsonb, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
-import { agentStatusEnum, hitlModeEnum } from "./enums";
-import { executives } from "./executive";
+import { agentStatusEnum, hitlModeEnum } from "./enums.js";
+import { executives } from "./executive.js";
 
 // SRS §5.1: id, executive_id, name, description, responsibilities[],
 // hitl_mode, status, created_at, updated_at.

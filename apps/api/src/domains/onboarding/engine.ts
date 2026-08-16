@@ -14,12 +14,12 @@ import {
 import { logOnboardingEvent } from "@vex-os/audit";
 import type { HitlMode } from "@vex-os/shared";
 import { MIN_ONBOARDING_QUESTIONS } from "@vex-os/shared";
-import { FIRST_QUESTION_ID, QUESTION_BANK } from "./question-bank";
+import { FIRST_QUESTION_ID, QUESTION_BANK } from "./question-bank.js";
 import {
   ProfileExtractionSchema,
   VoiceProfileExtractionSchema,
   WorkforceGenerationSchema,
-} from "./schemas";
+} from "./schemas.js";
 
 interface TranscriptEntry {
   question: string;

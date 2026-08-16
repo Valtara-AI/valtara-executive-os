@@ -1,6 +1,6 @@
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
-import * as schema from "./schema/index";
+import * as schema from "./schema/index.js";
 
 let cachedClient: ReturnType<typeof drizzle<typeof schema>> | undefined;
 
@@ -17,4 +17,4 @@ export function getDb(): ReturnType<typeof drizzle<typeof schema>> {
   return cachedClient;
 }
 
-export * as schema from "./schema/index";
+export * as schema from "./schema/index.js";

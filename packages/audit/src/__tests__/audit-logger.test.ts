@@ -4,7 +4,7 @@
 
 import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
-import { AuditLogger } from "../audit-logger";
+import { AuditLogger } from "../audit-logger.js";
 
 const hasDb = Boolean(process.env.DATABASE_URL);
 

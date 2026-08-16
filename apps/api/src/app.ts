@@ -1,10 +1,10 @@
 import { Hono } from "hono";
 import { fail } from "@vex-os/shared";
-import type { AuthedVariables } from "./middleware/jwt";
-import { jwtMiddleware } from "./middleware/jwt";
-import { errorHandler } from "./middleware/error-handler";
-import { healthRoute } from "./routes/health";
-import { onboardingRoute } from "./routes/onboarding";
+import type { AuthedVariables } from "./middleware/jwt.js";
+import { jwtMiddleware } from "./middleware/jwt.js";
+import { errorHandler } from "./middleware/error-handler.js";
+import { healthRoute } from "./routes/health.js";
+import { onboardingRoute } from "./routes/onboarding.js";
 
 // API-001 §2.1: base URL /api/v1/, all endpoints require authentication
 // except /auth/* (and, by the same rationale, /health).

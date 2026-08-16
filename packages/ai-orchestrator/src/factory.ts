@@ -1,7 +1,7 @@
-import type { InferenceProvider } from "./types";
-import { AnthropicProvider } from "./providers/anthropic-provider";
-import { OpenAIProvider } from "./providers/openai-provider";
-import { GoogleProvider } from "./providers/google-provider";
+import type { InferenceProvider } from "./types.js";
+import { AnthropicProvider } from "./providers/anthropic-provider.js";
+import { OpenAIProvider } from "./providers/openai-provider.js";
+import { GoogleProvider } from "./providers/google-provider.js";
 
 // SAD §4.3 "Model routing": per-task model configuration via env vars.
 export type ModelTier = "default" | "analysis" | "onboarding" | "draft";

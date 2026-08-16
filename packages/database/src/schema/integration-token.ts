@@ -1,5 +1,5 @@
 import { jsonb, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
-import { executives } from "./executive";
+import { executives } from "./executive.js";
 
 // SRS §5.1: id, executive_id, provider, access_token_encrypted,
 // refresh_token_encrypted, scopes[], expires_at. Sprint 4+ scope (Gmail/

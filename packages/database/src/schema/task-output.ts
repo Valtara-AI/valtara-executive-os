@@ -1,6 +1,6 @@
 import { integer, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
-import { hitlStatusEnum } from "./enums";
-import { tasks } from "./task";
+import { hitlStatusEnum } from "./enums.js";
+import { tasks } from "./task.js";
 
 // SRS §5.1: id, task_id, model_provider, model_id, prompt_version,
 // output_text, tokens_input, tokens_output, duration_ms, hitl_status,

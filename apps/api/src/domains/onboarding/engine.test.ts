@@ -8,8 +8,8 @@ import { afterAll, describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
 import { getDb, schema } from "@vex-os/database";
 import { MockProvider } from "@vex-os/ai-orchestrator";
-import { FIRST_QUESTION_ID, QUESTION_BANK } from "./question-bank";
-import * as engine from "./engine";
+import { FIRST_QUESTION_ID, QUESTION_BANK } from "./question-bank.js";
+import * as engine from "./engine.js";
 
 const hasDb = Boolean(process.env.DATABASE_URL);
 

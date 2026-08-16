@@ -4,7 +4,7 @@
 // InferenceProvider interface (CLAUDE.md non-negotiable #1).
 
 import Anthropic from "@anthropic-ai/sdk";
-import type { InferenceProvider, InferenceRequest, InferenceResult } from "../types";
+import type { InferenceProvider, InferenceRequest, InferenceResult } from "../types.js";
 
 export class AnthropicProvider implements InferenceProvider {
   private client: Anthropic | undefined;

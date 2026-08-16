@@ -5,10 +5,10 @@
 import { Hono } from "hono";
 import { z } from "zod";
 import { fail, ok } from "@vex-os/shared";
-import type { AuthedVariables } from "../middleware/jwt";
-import { requireRole } from "../middleware/rbac";
-import * as onboardingEngine from "../domains/onboarding/engine";
-import { resolveExecutive } from "../domains/onboarding/resolve-executive";
+import type { AuthedVariables } from "../middleware/jwt.js";
+import { requireRole } from "../middleware/rbac.js";
+import * as onboardingEngine from "../domains/onboarding/engine.js";
+import { resolveExecutive } from "../domains/onboarding/resolve-executive.js";
 
 export const onboardingRoute = new Hono<{ Variables: AuthedVariables }>();
 

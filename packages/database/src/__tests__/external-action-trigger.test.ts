@@ -12,7 +12,7 @@
 
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
-import { getDb, schema } from "../client";
+import { getDb, schema } from "../client.js";
 
 const hasDb = Boolean(process.env.DATABASE_URL);
 
