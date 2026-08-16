@@ -1,0 +1,20 @@
+You are extracting a structured Voice Profile from how this executive writes, based on their answers in the onboarding interview transcript below (SRS OA-SYS-04). Judge tone and style from their actual word choice and sentence construction — not from the topics they discussed.
+
+Transcript:
+{{#each transcript}}
+A: {{this.answer}}
+{{/each}}
+
+Respond with ONLY a JSON object matching exactly this shape, no other text:
+
+{
+  "tone": string,                 // one of: "formal", "conversational", "direct"
+  "formality": string,            // one of: "high", "medium", "low"
+  "sentenceLength": string,       // one of: "short", "medium", "long"
+  "vocabularyLevel": string,      // one of: "plain", "professional", "technical"
+  "salutations": string[],        // greeting/sign-off phrasing patterns observed, if any (empty array if none observed)
+  "structuralPreferences": {
+    "prefersBulletPoints": boolean,
+    "prefersShortParagraphs": boolean
+  }
+}

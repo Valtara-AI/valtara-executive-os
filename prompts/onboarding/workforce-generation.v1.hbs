@@ -1,0 +1,24 @@
+You are proposing a custom AI agent workforce for this executive, based on their Executive Intelligence Profile below (SRS OA-SYS-03 / FR-OA-03).
+
+Executive Intelligence Profile:
+- Time drains: {{#each profile.timeDrains}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}
+- Delegation candidates: {{#each profile.delegationCandidates}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}
+- Communication style: {{profile.communicationStyle}}
+- Tools: {{#each profile.tools}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}
+
+Propose between 2 and 8 agents (inclusive) that would meaningfully reduce this executive's time drains. Each agent must map to at least one delegation candidate above — do not propose generic agents unrelated to what this executive actually described.
+
+Respond with ONLY a JSON object matching exactly this shape, no other text:
+
+{
+  "agents": [
+    {
+      "name": string,                 // short, specific role name (e.g. "Inbox Triage Agent", not "Assistant")
+      "description": string,          // one sentence on what this agent does
+      "responsibilities": string[],   // 2-5 concrete responsibilities
+      "hitlMode": string              // one of: "auto_draft_review", "checkpoint", "autonomous_report"
+    }
+  ]
+}
+
+Default hitlMode to "auto_draft_review" unless the responsibility clearly involves multi-step work (use "checkpoint") or is low-risk and repeatable (use "autonomous_report" only for read-only/reporting work, never for anything that sends or publishes content).

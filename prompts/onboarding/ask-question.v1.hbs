@@ -1,0 +1,10 @@
+{{! Rendered directly to the executive as the next interview question — not
+    sent to an LLM. The question-asking step is deterministic (see
+    apps/api/src/domains/onboarding/question-bank.ts) so the interview never
+    drifts from the fixed set of profile fields it's designed to populate;
+    only profile-extraction, voice-profile-extraction, and
+    workforce-generation below involve an actual LLM call. This template
+    exists so question presentation still goes through the same
+    versioned-template convention as everything else in /prompts, rather
+    than being an inline string in business logic. }}
+{{#if priorAnswerAcknowledgement}}{{priorAnswerAcknowledgement}} {{/if}}{{questionText}}
