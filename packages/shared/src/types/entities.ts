@@ -7,7 +7,8 @@
 export type OnboardingStatus = "not_started" | "in_progress" | "complete";
 export type HitlMode = "auto_draft_review" | "checkpoint" | "autonomous_report";
 export type AgentStatus = "active" | "archived";
-export type TaskStatus = "queued" | "in_progress" | "at_checkpoint" | "complete" | "failed";
+export type TaskStatus =
+  "queued" | "in_progress" | "at_checkpoint" | "complete" | "failed" | "cancelled";
 export type HitlStatus = "pending" | "approved" | "edited" | "rejected";
 
 export interface Executive {

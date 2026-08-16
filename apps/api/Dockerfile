@@ -62,4 +62,9 @@ COPY --from=build /repo/packages/audit/dist packages/audit/dist
 COPY prompts prompts
 
 EXPOSE 3001
+# Default CMD runs the HTTP server. The BullMQ worker (SAD §4.2: background
+# jobs are their own deployable unit) is the *same* image with the CMD
+# overridden to ["node", "apps/api/dist/worker.js"] - a second Railway
+# service (or docker-compose service) pointed at this image with that
+# override, not a separate build.
 CMD ["node", "apps/api/dist/index.js"]

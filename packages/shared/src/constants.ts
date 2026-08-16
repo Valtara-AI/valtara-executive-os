@@ -25,6 +25,7 @@ export const TASK_STATUSES: readonly TaskStatus[] = [
   "at_checkpoint",
   "complete",
   "failed",
+  "cancelled",
 ];
 
 export const ONBOARDING_STATUSES: readonly OnboardingStatus[] = [

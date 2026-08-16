@@ -16,3 +16,13 @@ export function logOnboardingEvent(
 ) {
   return sharedLogger.log({ ...entry, entityType: entry.entityType ?? "onboarding_session" });
 }
+
+/** Convenience wrapper for agent task execution (FR-AW-06: task starts/completions). */
+export function logTaskEvent(entry: Omit<AuditLogInput, "entityType"> & { entityType?: string }) {
+  return sharedLogger.log({ ...entry, entityType: entry.entityType ?? "task" });
+}
+
+/** Convenience wrapper for HITL queue actions (approve/edit/reject - SEC-001 §6). */
+export function logHitlEvent(entry: Omit<AuditLogInput, "entityType"> & { entityType?: string }) {
+  return sharedLogger.log({ ...entry, entityType: entry.entityType ?? "hitl_queue_item" });
+}

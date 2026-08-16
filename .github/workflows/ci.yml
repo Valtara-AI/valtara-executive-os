@@ -53,13 +53,14 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
-    # A Postgres service, not just the CI cache/lint jobs above, because
-    # several tests are gated on DATABASE_URL being set and otherwise only
-    # ever *skip* (see packages/database's external-action-trigger.test.ts
-    # and apps/api's engine.test.ts) - including the HITL-enforcement
-    # trigger test, which is the single most important test in the Sprint 1
-    # plan. Without this service, CI would report green while that
-    # invariant was never actually checked.
+    # Postgres AND Redis services, not just the CI cache/lint jobs above,
+    # because several tests are gated on DATABASE_URL/REDIS_URL being set
+    # and otherwise only ever *skip* (see packages/database's
+    # external-action-trigger.test.ts and apps/api's engine.test.ts /
+    # agent-task-worker.test.ts) - including the HITL-enforcement trigger
+    # test and the real BullMQ worker test, two of the most important tests
+    # in the Sprint 1/2 plan. Without these services, CI would report green
+    # while those invariants were never actually checked.
     services:
       postgres:
         image: pgvector/pgvector:pg15
@@ -74,8 +75,18 @@ jobs:
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     env:
       DATABASE_URL: postgresql://vexos:vexos_ci@localhost:5432/vexos
+      REDIS_URL: redis://localhost:6379
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
