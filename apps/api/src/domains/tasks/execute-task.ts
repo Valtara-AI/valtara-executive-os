@@ -11,7 +11,7 @@
 // context-window budgeting strategy this Sprint doesn't build, and the
 // latter doesn't exist until Sprint 4+'s integration adapters.
 
-import { eq } from "drizzle-orm";
+import { and, eq, ne } from "drizzle-orm";
 import { getDb, schema } from "@vex-os/database";
 import {
   getInferenceProvider,
@@ -60,7 +60,19 @@ export async function executeTask(
       )[0]
     : undefined;
 
-  await db.update(schema.tasks).set({ status: "in_progress" }).where(eq(schema.tasks.id, taskId));
+  // Guarded transition, not a plain write: closes the race where
+  // DELETE /tasks/:taskId cancels a task after enqueueing but before a
+  // worker picks it up. `ne(status, "cancelled")` rather than requiring
+  // exactly "queued" so a BullMQ retry (still "in_progress" from the first
+  // attempt) is allowed to proceed - only an explicit cancellation blocks
+  // it. Zero rows updated means it was cancelled first; skip execution
+  // entirely rather than spending an LLM call on it.
+  const [claimed] = await db
+    .update(schema.tasks)
+    .set({ status: "in_progress" })
+    .where(and(eq(schema.tasks.id, taskId), ne(schema.tasks.status, "cancelled")))
+    .returning();
+  if (!claimed) return;
 
   await logTaskEvent({
     actorId: executive.id,
@@ -124,13 +136,21 @@ export async function executeTask(
     });
   }
 
-  await db
+  // Same guard as the initial transition, for the window where cancellation
+  // happens *during* the LLM call. The TaskOutput/HITLQueueItem above are
+  // already written by this point regardless - cancellation is best-effort
+  // (it stops the task's status from being clobbered back to "complete"),
+  // not a hard interrupt of work already in flight. The executive can still
+  // see and reject the HITL item if they don't want it.
+  const [finalized] = await db
     .update(schema.tasks)
     .set({
       status: resolveCompletionStatus(agent.hitlMode),
       completedAt: new Date(),
     })
-    .where(eq(schema.tasks.id, taskId));
+    .where(and(eq(schema.tasks.id, taskId), ne(schema.tasks.status, "cancelled")))
+    .returning();
+  if (!finalized) return;
 
   await logTaskEvent({
     actorId: executive.id,

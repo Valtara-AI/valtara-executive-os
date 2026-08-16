@@ -70,12 +70,13 @@ tasksRoute.delete("/:taskId", async (c) => {
     );
   }
 
-  // Cancels the task record; the BullMQ job itself isn't removed from the
-  // queue (removing an in-flight job mid-execution isn't a clean operation
-  // in BullMQ). If it's already been picked up by a worker, executeTask
-  // will still run to completion and overwrite this "cancelled" status
-  // with its real result - a genuine gap, since nothing checks task.status
-  // before executeTask writes its outcome.
+  // The BullMQ job itself isn't removed from the queue (removing an
+  // in-flight job mid-execution isn't a clean operation in BullMQ). If it's
+  // already been picked up by a worker, executeTask's guarded updates
+  // (WHERE status != 'cancelled') stop it from clobbering this status back
+  // to "complete" - but any TaskOutput/HITLQueueItem it had already
+  // produced before noticing the cancellation stay as-is; cancellation is
+  // best-effort, not a hard interrupt of work already in flight.
   const [cancelled] = await getDb()
     .update(schema.tasks)
     .set({ status: "cancelled", completedAt: new Date() })

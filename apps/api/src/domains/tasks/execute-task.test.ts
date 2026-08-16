@@ -4,7 +4,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
 import { getDb, schema } from "@vex-os/database";
-import { MockProvider } from "@vex-os/ai-orchestrator";
+import { MockProvider, type InferenceProvider } from "@vex-os/ai-orchestrator";
 import { executeTask, TaskNotFoundError } from "./execute-task.js";
 
 const hasDb = Boolean(process.env.DATABASE_URL);
@@ -156,5 +156,62 @@ describe.skipIf(!hasDb)("executeTask", () => {
     await expect(
       executeTask("00000000-0000-0000-0000-000000000000", new MockProvider()),
     ).rejects.toThrow(TaskNotFoundError);
+  });
+
+  it("cancelled before pickup: does not call the LLM, does not overwrite the cancelled status", async () => {
+    const db = getDb();
+    const { task } = await makeExecutiveAndAgent("auto_draft_review");
+    await db.update(schema.tasks).set({ status: "cancelled" }).where(eq(schema.tasks.id, task.id));
+
+    const provider = new MockProvider();
+    provider.enqueue("Should never be produced.");
+    await executeTask(task.id, provider);
+
+    expect(provider.calls).toHaveLength(0);
+
+    const [finalTask] = await db.select().from(schema.tasks).where(eq(schema.tasks.id, task.id));
+    expect(finalTask?.status).toBe("cancelled");
+
+    const outputs = await db
+      .select()
+      .from(schema.taskOutputs)
+      .where(eq(schema.taskOutputs.taskId, task.id));
+    expect(outputs).toHaveLength(0);
+  });
+
+  it("cancelled mid-flight (during the LLM call): does not overwrite the cancelled status, but the output already produced is kept", async () => {
+    const db = getDb();
+    const { task } = await makeExecutiveAndAgent("auto_draft_review");
+
+    // Simulates DELETE /tasks/:taskId racing with an in-flight worker: the
+    // cancellation lands *during* what would be the LLM call.
+    const realProvider = new MockProvider();
+    realProvider.enqueue("Produced despite mid-flight cancellation.");
+    const provider: InferenceProvider = {
+      async complete(request) {
+        await db
+          .update(schema.tasks)
+          .set({ status: "cancelled" })
+          .where(eq(schema.tasks.id, task.id));
+        return realProvider.complete(request);
+      },
+      isAvailable: () => Promise.resolve(true),
+      getProviderName: () => "mock",
+    };
+
+    await executeTask(task.id, provider);
+
+    const [finalTask] = await db.select().from(schema.tasks).where(eq(schema.tasks.id, task.id));
+    // Cancellation wins on status - the guarded final update refuses to
+    // clobber it back to "complete".
+    expect(finalTask?.status).toBe("cancelled");
+
+    // But the work already done before the guard caught it is kept, not
+    // silently dropped - cancellation is best-effort, not a hard interrupt.
+    const [output] = await db
+      .select()
+      .from(schema.taskOutputs)
+      .where(eq(schema.taskOutputs.taskId, task.id));
+    expect(output?.outputText).toBe("Produced despite mid-flight cancellation.");
   });
 });
