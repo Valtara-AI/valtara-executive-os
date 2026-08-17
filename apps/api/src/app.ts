@@ -13,6 +13,7 @@ import { executiveDelegatesRoute, delegateInvitationsRoute } from "./routes/dele
 import { internalRoute } from "./routes/internal.js";
 import { briefsRoute } from "./routes/briefs.js";
 import { dashboardRoute } from "./routes/dashboard.js";
+import { executiveProfileRoute } from "./routes/executive-profile.js";
 
 // API-001 §2.1: base URL /api/v1/, all endpoints require authentication
 // except /auth/* (and, by the same rationale, /health).
@@ -33,6 +34,7 @@ export function createApp() {
   v1.use("/executive/*", jwtMiddleware);
   v1.route("/executive/onboarding", onboardingRoute);
   v1.route("/executive/delegates", executiveDelegatesRoute);
+  v1.route("/executive/profile", executiveProfileRoute);
 
   v1.use("/agents/*", jwtMiddleware);
   v1.route("/agents", agentsRoute);
