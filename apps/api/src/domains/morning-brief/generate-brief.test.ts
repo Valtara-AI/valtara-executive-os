@@ -170,6 +170,139 @@ describe.skipIf(!hasDb)("generateBrief", () => {
     }
   });
 
+  it("includes real calendar and email context when Microsoft is connected", async () => {
+    const executive = await makeExecutive();
+    await saveTokens(executive.id, "microsoft", {
+      accessToken: "at",
+      refreshToken: "rt",
+      scopes: [],
+      expiresAt: new Date(Date.now() + 3600_000),
+    });
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockImplementation((url: string) => {
+        if (url.includes("calendarView")) {
+          return Promise.resolve({
+            ok: true,
+            json: () =>
+              Promise.resolve({
+                value: [
+                  { id: "e1", subject: "Board sync", start: { dateTime: "2026-03-15T14:00:00Z" } },
+                ],
+              }),
+          });
+        }
+        if (url.includes("/me/messages")) {
+          return Promise.resolve({
+            ok: true,
+            json: () =>
+              Promise.resolve({
+                value: [{ id: "m1", bodyPreview: "Q3 numbers attached", isRead: false }],
+              }),
+          });
+        }
+        throw new Error(`Unexpected fetch to ${url}`);
+      }),
+    );
+
+    const provider = new MockProvider();
+    provider.enqueue("Brief with calendar and email.");
+
+    try {
+      const brief = await generateBrief(executive.id, provider);
+      expect(brief.content).toBe("Brief with calendar and email.");
+      expect((brief.sectionsJson as { microsoftConnected: boolean }).microsoftConnected).toBe(true);
+      expect((brief.sectionsJson as { calendarEventCount: number }).calendarEventCount).toBe(1);
+      expect((brief.sectionsJson as { unreadEmailCount: number }).unreadEmailCount).toBe(1);
+
+      expect(provider.calls[0]?.systemPrompt).toContain("Board sync");
+      expect(provider.calls[0]?.systemPrompt).toContain("Q3 numbers attached");
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it("merges calendar/email from both providers when both Google and Microsoft are connected", async () => {
+    const executive = await makeExecutive();
+    await saveTokens(executive.id, "google", {
+      accessToken: "at",
+      refreshToken: "rt",
+      scopes: [],
+      expiresAt: new Date(Date.now() + 3600_000),
+    });
+    await saveTokens(executive.id, "microsoft", {
+      accessToken: "at",
+      refreshToken: "rt",
+      scopes: [],
+      expiresAt: new Date(Date.now() + 3600_000),
+    });
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockImplementation((url: string) => {
+        if (url.includes("calendar/v3")) {
+          return Promise.resolve({
+            ok: true,
+            json: () =>
+              Promise.resolve({
+                items: [
+                  {
+                    id: "g1",
+                    summary: "Google event",
+                    start: { dateTime: "2026-03-15T14:00:00Z" },
+                  },
+                ],
+              }),
+          });
+        }
+        if (url.includes("gmail/v1")) {
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve({ threads: [{ id: "t1", snippet: "Gmail thread" }] }),
+          });
+        }
+        if (url.includes("calendarView")) {
+          return Promise.resolve({
+            ok: true,
+            json: () =>
+              Promise.resolve({
+                value: [
+                  {
+                    id: "e1",
+                    subject: "Outlook event",
+                    start: { dateTime: "2026-03-15T16:00:00Z" },
+                  },
+                ],
+              }),
+          });
+        }
+        if (url.includes("/me/messages")) {
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve({ value: [{ id: "m1", bodyPreview: "Outlook message" }] }),
+          });
+        }
+        throw new Error(`Unexpected fetch to ${url}`);
+      }),
+    );
+
+    const provider = new MockProvider();
+    provider.enqueue("Brief with both providers.");
+
+    try {
+      const brief = await generateBrief(executive.id, provider);
+      expect((brief.sectionsJson as { googleConnected: boolean }).googleConnected).toBe(true);
+      expect((brief.sectionsJson as { microsoftConnected: boolean }).microsoftConnected).toBe(true);
+      expect((brief.sectionsJson as { calendarEventCount: number }).calendarEventCount).toBe(2);
+      expect((brief.sectionsJson as { unreadEmailCount: number }).unreadEmailCount).toBe(2);
+      expect(provider.calls[0]?.systemPrompt).toContain("Google event");
+      expect(provider.calls[0]?.systemPrompt).toContain("Outlook event");
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   it("degrades gracefully (empty sections, brief still generates) when a Google API call fails", async () => {
     const executive = await makeExecutive();
     await saveTokens(executive.id, "google", {
@@ -180,14 +313,12 @@ describe.skipIf(!hasDb)("generateBrief", () => {
     });
     vi.stubGlobal(
       "fetch",
-      vi
-        .fn()
-        .mockResolvedValue({
-          ok: false,
-          status: 500,
-          headers: new Headers(),
-          text: () => Promise.resolve(""),
-        }),
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 500,
+        headers: new Headers(),
+        text: () => Promise.resolve(""),
+      }),
     );
 
     const provider = new MockProvider();

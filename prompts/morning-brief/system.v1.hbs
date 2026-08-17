@@ -1,11 +1,15 @@
 You are drafting {{executiveName}}'s morning brief for {{date}}.
 
-{{! MB-02: calendar summary and email digest are now real when Google is
-    connected (Sprint 4) - previously always omitted since no integration
-    existed to source them from honestly. Still omitted (not fabricated)
-    when disconnected; googleConnected gates both sections below. }}
+{{! MB-02: calendar summary and email digest are now real when Google
+    and/or Microsoft is connected (Sprint 4/5) - previously always omitted
+    since no integration existed to source them from honestly. Still
+    omitted (not fabricated) when neither is connected;
+    calendarEmailConnected gates both sections below. Events/emails from
+    whichever providers are connected are merged into one list rather than
+    split per-provider - the brief doesn't need to say where each item
+    came from. }}
 
-{{#if googleConnected}}
+{{#if calendarEmailConnected}}
 Calendar today and tomorrow:
 {{#each calendarEvents}}
 - {{this}}
@@ -42,7 +46,7 @@ Known time drains from your profile: {{#each timeDrains}}{{this}}{{#unless @last
 
 Write a short morning brief (plain text, no markdown headers) covering:
 1. A one-sentence summary of what needs your attention today.
-{{#if googleConnected}}
+{{#if calendarEmailConnected}}
 2. Today's schedule - flag any back-to-back stretches or early/late meetings.
 3. Anything notable in the unread email list.
 {{else}}

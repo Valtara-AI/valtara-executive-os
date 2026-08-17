@@ -1,7 +1,11 @@
 // MB-01/MB-02: composes and persists one executive's morning brief. See
 // prompts/morning-brief/system.v1.hbs for which sections are implemented.
 // Calendar/email were deferred in Sprint 3 (no integration existed to
-// source them from honestly); now real when Google is connected.
+// source them from honestly); now real when Google and/or Microsoft is
+// connected - an executive could have either, both, or neither, so
+// calendar/email context is gathered from whichever providers are
+// connected and merged into one list rather than the brief having a
+// separate section per provider.
 
 import { and, desc, eq, gte, inArray } from "drizzle-orm";
 import { getDb, schema } from "@vex-os/database";
@@ -11,7 +15,14 @@ import {
   type InferenceProvider,
 } from "@vex-os/ai-orchestrator";
 import { logTaskEvent } from "@vex-os/audit";
-import { GoogleCalendarAdapter, GoogleMailAdapter, isGoogleConnected } from "@vex-os/integrations";
+import {
+  GoogleCalendarAdapter,
+  GoogleMailAdapter,
+  isGoogleConnected,
+  OutlookCalendarAdapter,
+  OutlookMailAdapter,
+  isMicrosoftConnected,
+} from "@vex-os/integrations";
 
 export class ExecutiveNotFoundError extends Error {
   constructor(executiveId: string) {
@@ -30,21 +41,23 @@ function summarizeTask(task: { status: string; prompt: string }, agentName: stri
   return `${agentName} (${task.status}): ${truncatedPrompt}`;
 }
 
-interface GoogleContext {
+interface ProviderContext {
   connected: boolean;
   calendarEvents: string[];
   emailDigest: string[];
 }
 
-const calendarAdapter = new GoogleCalendarAdapter();
-const mailAdapter = new GoogleMailAdapter();
+const googleCalendarAdapter = new GoogleCalendarAdapter();
+const googleMailAdapter = new GoogleMailAdapter();
+const outlookCalendarAdapter = new OutlookCalendarAdapter();
+const outlookMailAdapter = new OutlookMailAdapter();
 
 // MB-04: "freshness ≤ 30 minutes" is satisfied by construction here - this
 // runs at generation time, not from a cache. A fetch failure (expired
 // token needing re-auth, a transient Google outage) degrades to an empty
 // section rather than failing the whole brief - the executive still gets
 // HITL/task status even if calendar/email couldn't be reached right now.
-async function gatherGoogleContext(executiveId: string): Promise<GoogleContext> {
+async function gatherGoogleContext(executiveId: string): Promise<ProviderContext> {
   const connected = await isGoogleConnected(executiveId);
   if (!connected) return { connected: false, calendarEvents: [], emailDigest: [] };
 
@@ -52,7 +65,7 @@ async function gatherGoogleContext(executiveId: string): Promise<GoogleContext> 
   const twoDaysOut = new Date(now.getTime() + 48 * 60 * 60 * 1000);
 
   const [calendarEvents, emailDigest] = await Promise.all([
-    calendarAdapter
+    googleCalendarAdapter
       .listEvents(executiveId, now, twoDaysOut)
       .then((events) =>
         events.map((e) => {
@@ -61,9 +74,36 @@ async function gatherGoogleContext(executiveId: string): Promise<GoogleContext> 
         }),
       )
       .catch(() => []),
-    mailAdapter
+    googleMailAdapter
       .listThreads(executiveId, "is:unread", 5)
       .then((threads) => threads.map((t) => t.snippet))
+      .catch(() => []),
+  ]);
+
+  return { connected: true, calendarEvents, emailDigest };
+}
+
+// Same freshness/degrade-gracefully rationale as gatherGoogleContext above.
+async function gatherMicrosoftContext(executiveId: string): Promise<ProviderContext> {
+  const connected = await isMicrosoftConnected(executiveId);
+  if (!connected) return { connected: false, calendarEvents: [], emailDigest: [] };
+
+  const now = new Date();
+  const twoDaysOut = new Date(now.getTime() + 48 * 60 * 60 * 1000);
+
+  const [calendarEvents, emailDigest] = await Promise.all([
+    outlookCalendarAdapter
+      .listEvents(executiveId, now, twoDaysOut)
+      .then((events) =>
+        events.map((e) => {
+          const when = e.start?.dateTime ?? "unknown time";
+          return `${e.subject ?? "(no title)"} — ${when}`;
+        }),
+      )
+      .catch(() => []),
+    outlookMailAdapter
+      .listUnreadMessages(executiveId, 5)
+      .then((messages) => messages.map((m) => m.bodyPreview ?? m.subject ?? "(no preview)"))
       .catch(() => []),
   ]);
 
@@ -128,7 +168,17 @@ export async function generateBrief(
     .orderBy(desc(schema.executiveIntelligenceProfiles.version))
     .limit(1);
 
-  const googleContext = await gatherGoogleContext(executiveId);
+  const [googleContext, microsoftContext] = await Promise.all([
+    gatherGoogleContext(executiveId),
+    gatherMicrosoftContext(executiveId),
+  ]);
+  // Merged rather than sectioned per-provider: the brief cares about "what's
+  // on the calendar / in the inbox," not which provider it came from, and
+  // an executive connecting both would otherwise see duplicated headers for
+  // no benefit.
+  const calendarEmailConnected = googleContext.connected || microsoftContext.connected;
+  const calendarEvents = [...googleContext.calendarEvents, ...microsoftContext.calendarEvents];
+  const emailDigest = [...googleContext.emailDigest, ...microsoftContext.emailDigest];
 
   const systemPrompt = await renderPrompt("morning-brief/system.v1.hbs", {
     executiveName: executive.name,
@@ -139,9 +189,9 @@ export async function generateBrief(
       summarizeTask(t, agentNameById.get(t.agentId) ?? "Unknown agent"),
     ),
     timeDrains: latestProfile?.timeDrains ?? [],
-    googleConnected: googleContext.connected,
-    calendarEvents: googleContext.calendarEvents,
-    emailDigest: googleContext.emailDigest,
+    calendarEmailConnected,
+    calendarEvents,
+    emailDigest,
   });
 
   const result = await provider.complete({
@@ -155,8 +205,9 @@ export async function generateBrief(
     taskActivityCount: recentTasks.length,
     timeDrains: latestProfile?.timeDrains ?? [],
     googleConnected: googleContext.connected,
-    calendarEventCount: googleContext.calendarEvents.length,
-    unreadEmailCount: googleContext.emailDigest.length,
+    microsoftConnected: microsoftContext.connected,
+    calendarEventCount: calendarEvents.length,
+    unreadEmailCount: emailDigest.length,
   };
 
   const [brief] = await db
