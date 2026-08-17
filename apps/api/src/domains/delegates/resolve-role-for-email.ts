@@ -6,24 +6,44 @@
 // of what RBAC or the schema allowed.
 //
 // Precedence, evaluated in order:
-//  1. An Executive row already exists for this email -> "Executive".
-//     Takes priority so an existing executive who's also been invited as
-//     someone else's delegate keeps their own identity in this session
-//     (a single JWT carries one role - see the module comment in
-//     resolve-accessible-executive-ids.ts for what that does and doesn't
-//     cover).
-//  2. A delegate_links row (pending or accepted - inviting them is enough
+//  1. The email is in ADMIN_EMAILS -> "Administrator". Checked first,
+//     ahead of any Executive/Delegate row, because this is an explicit
+//     operator-controlled allowlist (DL-SEC-002) rather than something the
+//     product itself ever grants - nothing in-app can add or remove an
+//     entry, so a match here always reflects an intentional deployment
+//     decision, not incidental account history.
+//  2. An Executive row already exists for this email -> "Executive".
+//     Takes priority over Delegate so an existing executive who's also
+//     been invited as someone else's delegate keeps their own identity in
+//     this session (a single JWT carries one role - see the module
+//     comment in resolve-accessible-executive-ids.ts for what that does
+//     and doesn't cover).
+//  3. A delegate_links row (pending or accepted - inviting them is enough
 //     to shape their sign-in experience even before they've accepted)
 //     exists for this email -> "Delegate".
-//  3. Neither -> "Executive" (unchanged default for a genuinely new user).
+//  4. None of the above -> "Executive" (unchanged default for a genuinely
+//     new user).
 
 import { eq } from "drizzle-orm";
 import { getDb, schema } from "@vex-os/database";
 import type { Role } from "@vex-os/shared";
 import { normalizeEmail } from "./invite-delegate.js";
 
+function isAdminEmail(email: string): boolean {
+  const raw = process.env.ADMIN_EMAILS;
+  if (!raw) return false;
+  return raw
+    .split(",")
+    .map((entry) => normalizeEmail(entry.trim()))
+    .filter(Boolean)
+    .includes(email);
+}
+
 export async function resolveRoleForEmail(rawEmail: string): Promise<Role> {
   const email = normalizeEmail(rawEmail);
+
+  if (isAdminEmail(email)) return "Administrator";
+
   const db = getDb();
 
   const [executive] = await db

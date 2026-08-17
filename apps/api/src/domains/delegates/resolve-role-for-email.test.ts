@@ -7,6 +7,7 @@ import { getDb, schema } from "@vex-os/database";
 import { resolveRoleForEmail } from "./resolve-role-for-email.js";
 
 const hasDb = Boolean(process.env.DATABASE_URL);
+const ORIGINAL_ADMIN_EMAILS = process.env.ADMIN_EMAILS;
 
 describe.skipIf(!hasDb)("resolveRoleForEmail", () => {
   const cleanupExecutiveIds: string[] = [];
@@ -20,6 +21,8 @@ describe.skipIf(!hasDb)("resolveRoleForEmail", () => {
     for (const email of cleanupDelegateLinkEmails.splice(0)) {
       await db.delete(schema.delegateLinks).where(eq(schema.delegateLinks.delegateEmail, email));
     }
+    if (ORIGINAL_ADMIN_EMAILS === undefined) delete process.env.ADMIN_EMAILS;
+    else process.env.ADMIN_EMAILS = ORIGINAL_ADMIN_EMAILS;
   });
 
   it("returns 'Executive' for a brand-new email with no history at all", async () => {
@@ -96,6 +99,31 @@ describe.skipIf(!hasDb)("resolveRoleForEmail", () => {
     cleanupExecutiveIds.push(both!.id);
 
     expect(await resolveRoleForEmail(bothEmail)).toBe("Executive");
+  });
+
+  it("returns 'Administrator' for an email in ADMIN_EMAILS, ahead of any Executive/Delegate history", async () => {
+    const db = getDb();
+    const email = `admin-${Date.now()}@example.com`;
+    process.env.ADMIN_EMAILS = `someone-else@example.com, ${email} ,another@example.com`;
+
+    // Even with an Executive row for the same email, ADMIN_EMAILS wins -
+    // it's an explicit operator decision, not incidental account history.
+    const [executive] = await db.insert(schema.executives).values({ name: "E", email }).returning();
+    cleanupExecutiveIds.push(executive!.id);
+
+    expect(await resolveRoleForEmail(email)).toBe("Administrator");
+  });
+
+  it("matches ADMIN_EMAILS case-insensitively", async () => {
+    const email = `Mixed-Admin-${Date.now()}@Example.com`;
+    process.env.ADMIN_EMAILS = email.toLowerCase();
+
+    expect(await resolveRoleForEmail(email.toUpperCase())).toBe("Administrator");
+  });
+
+  it("returns 'Executive' when ADMIN_EMAILS is unset or doesn't match", async () => {
+    delete process.env.ADMIN_EMAILS;
+    expect(await resolveRoleForEmail(`not-admin-${Date.now()}@example.com`)).toBe("Executive");
   });
 
   it("matches case-insensitively", async () => {
