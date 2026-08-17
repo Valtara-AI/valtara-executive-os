@@ -39,7 +39,11 @@ export async function apiFetch<T>(
 
   const body = (await res.json()) as ApiEnvelope<T>;
 
-  if (!res.ok || !body.success || body.data === null) {
+  // `data: null` is a legitimate *success* payload for endpoints like
+  // GET /briefs/today ("null if not yet generated" - API-001 §2.7), not
+  // itself a failure signal - res.ok + body.success are the actual
+  // contract for that (API-001 §2.1).
+  if (!res.ok || !body.success) {
     throw new ApiError(
       body.error?.code ?? "UNKNOWN_ERROR",
       body.error?.message ?? `Request to ${path} failed with status ${res.status}.`,
@@ -47,5 +51,5 @@ export async function apiFetch<T>(
     );
   }
 
-  return body.data;
+  return body.data as T;
 }

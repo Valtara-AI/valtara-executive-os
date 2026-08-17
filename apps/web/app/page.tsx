@@ -1,18 +1,32 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
+import { getExecutiveProfile } from "@/lib/dashboard-api";
 
-// Sprint 1 scope is auth + the onboarding conversation engine (CLAUDE.md
-// Sprint Plan); routing an already-onboarded executive straight to a
-// dashboard is Sprint 3 scope once GET /api/v1/executive/profile exists to
-// check onboardingStatus. For now every authenticated visit goes to
-// /onboarding, whose own flow (see app/onboarding/page.tsx) is what
-// forwards to /welcome once confirm() succeeds.
+// A Delegate has no executives row of their own (GET /executive/profile is
+// Executive-only), so onboarding status only applies to the Executive role
+// - a Delegate goes straight to /dashboard, where they'll either see their
+// accepted executives' data or a pending-invitations widget to accept one.
 export default async function RootPage() {
   const session = await auth();
 
   if (!session) {
     redirect("/api/auth/signin");
   }
+  if (!session.accessToken) {
+    redirect("/api/auth/signin");
+  }
 
-  redirect("/onboarding");
+  const role = session.user?.role;
+  if (role !== "Executive") {
+    redirect("/dashboard");
+  }
+
+  try {
+    const { executive } = await getExecutiveProfile(session.accessToken);
+    redirect(executive.onboardingStatus === "complete" ? "/dashboard" : "/onboarding");
+  } catch {
+    // Profile lookup failing (apps/api unreachable, etc.) shouldn't stall
+    // the user on a blank page - onboarding is always safe to (re)enter.
+    redirect("/onboarding");
+  }
 }

@@ -15,5 +15,5 @@ export default auth((req) => {
 });
 
 export const config = {
-  matcher: ["/onboarding/:path*", "/welcome/:path*"],
+  matcher: ["/onboarding/:path*", "/dashboard/:path*"],
 };

@@ -71,7 +71,7 @@ export default function OnboardingPage() {
       confirmOnboardingWorkforce(accessToken!, sessionId!, Object.values(selections)),
     onSuccess: () => {
       confirmComplete();
-      router.push("/welcome");
+      router.push("/dashboard");
     },
   });
 

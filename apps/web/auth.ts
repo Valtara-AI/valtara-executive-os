@@ -118,12 +118,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
     async session({ session, token }) {
       if (!token.sub || !session.user?.email) return session;
+      const role: Role = token.role ?? DEFAULT_ROLE;
       const accessToken = await mintAccessToken({
         sub: token.sub,
         email: session.user.email,
-        role: (token.role as Role | undefined) ?? DEFAULT_ROLE,
+        role,
       });
-      return { ...session, accessToken };
+      // role exposed on session.user (not just baked into accessToken) so
+      // server components like app/page.tsx can branch on it without
+      // decoding the JWT themselves.
+      return { ...session, accessToken, user: { ...session.user, role } };
     },
   },
 });
