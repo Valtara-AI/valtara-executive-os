@@ -36,6 +36,13 @@
       "when": 1786925533443,
       "tag": "0004_talented_jimmy_woo",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1786927737000,
+      "tag": "0005_deep_wolf_cub",
+      "breakpoints": true
     }
   ]
 }

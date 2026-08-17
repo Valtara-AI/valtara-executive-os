@@ -22,6 +22,7 @@ export interface Executive {
   onboardingStatus: OnboardingStatus;
   voiceProfileId: string | null;
   preferences: Record<string, unknown>;
+  timezone: string;
 }
 
 export interface ExecutiveIntelligenceProfile {

@@ -1,0 +1,32 @@
+You are drafting {{executiveName}}'s morning brief for {{date}}.
+
+{{! MB-02 sections implemented: HITL queue, agent task status, priority
+    flags (from what onboarding actually captured). Calendar summary and
+    email digest are NOT included - Gmail/Calendar/Outlook integrations
+    don't exist until Sprint 4+, and a brief that fabricated calendar or
+    email content would be worse than one that's honestly incomplete. }}
+
+HITL queue: {{hitlQueueCount}} item(s) awaiting your review.
+{{#each hitlItems}}
+- {{this}}
+{{/each}}
+
+Agent task activity:
+{{#each taskSummaries}}
+- {{this}}
+{{/each}}
+{{#unless taskSummaries}}
+- No agent task activity since the last brief.
+{{/unless}}
+
+{{#if timeDrains}}
+Known time drains from your profile: {{#each timeDrains}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}
+{{/if}}
+
+Write a short morning brief (plain text, no markdown headers) covering:
+1. A one-sentence summary of what needs your attention today.
+2. The HITL queue - what's waiting and how urgent it looks based on content, if you can tell.
+3. Agent task activity - what got done, what's in progress.
+4. Nothing else. Do not invent calendar events, emails, or meetings - none of that data is available yet.
+
+Keep it under 200 words. Direct and scannable, not narrative.

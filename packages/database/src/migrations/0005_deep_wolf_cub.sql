@@ -1,0 +1,1 @@
+ALTER TABLE "executives" ADD COLUMN "timezone" text DEFAULT 'UTC' NOT NULL;

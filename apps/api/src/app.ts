@@ -11,6 +11,8 @@ import { tasksRoute } from "./routes/tasks.js";
 import { hitlRoute } from "./routes/hitl.js";
 import { executiveDelegatesRoute, delegateInvitationsRoute } from "./routes/delegates.js";
 import { internalRoute } from "./routes/internal.js";
+import { briefsRoute } from "./routes/briefs.js";
+import { dashboardRoute } from "./routes/dashboard.js";
 
 // API-001 §2.1: base URL /api/v1/, all endpoints require authentication
 // except /auth/* (and, by the same rationale, /health).
@@ -43,6 +45,12 @@ export function createApp() {
 
   v1.use("/delegate/*", jwtMiddleware);
   v1.route("/delegate/invitations", delegateInvitationsRoute);
+
+  v1.use("/briefs/*", jwtMiddleware);
+  v1.route("/briefs", briefsRoute);
+
+  v1.use("/dashboard/*", jwtMiddleware);
+  v1.route("/dashboard", dashboardRoute);
 
   // Service-to-service only - internalSecretMiddleware, not jwtMiddleware.
   // Called by apps/web's NextAuth server-side, never by a browser.
