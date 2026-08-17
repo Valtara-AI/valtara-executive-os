@@ -1,9 +1,16 @@
 // DB-gated. Unlike most route tests, successful responses here are raw
 // files (CSV/JSON), not the {success, data, error} envelope - see
 // compliance.ts's header for why.
+//
+// No cleanup for the audit_log_entries rows this file creates (directly or
+// via the routes it calls) - audit_log_entries is RLS-immutable by design
+// (SEC-001 §6, proved in packages/database's
+// audit-log-immutability.test.ts), so a db.delete() against it has no
+// effect for any role this app ever connects as. Rows just accumulate
+// harmlessly, same as audit-logger.test.ts already does.
 
 import { randomUUID } from "node:crypto";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 import { desc, eq } from "drizzle-orm";
 import { getDb, schema } from "@vex-os/database";
 import { AuditLogger } from "@vex-os/audit";
@@ -23,7 +30,6 @@ interface ApiErrorEnvelope {
 describe.skipIf(!hasDb)("compliance routes", () => {
   let createApp: typeof import("../app").createApp;
   let signToken: Awaited<ReturnType<typeof createTestJwtSigner>>["signToken"];
-  const cleanupEntityIds: string[] = [];
   const logger = new AuditLogger();
 
   beforeAll(async () => {
@@ -31,13 +37,6 @@ describe.skipIf(!hasDb)("compliance routes", () => {
     process.env.JWT_PUBLIC_KEY = signer.publicKeyPem;
     signToken = signer.signToken;
     ({ createApp } = await import("../app"));
-  });
-
-  afterAll(async () => {
-    const db = getDb();
-    for (const entityId of cleanupEntityIds) {
-      await db.delete(schema.auditLogEntries).where(eq(schema.auditLogEntries.entityId, entityId));
-    }
   });
 
   async function adminToken(label: string) {
@@ -49,7 +48,6 @@ describe.skipIf(!hasDb)("compliance routes", () => {
 
   async function seedEntry(entityType: string) {
     const entityId = randomUUID();
-    cleanupEntityIds.push(entityId);
     await logger.log({
       actorId: "seed-actor",
       actorRole: "Executive",
@@ -65,7 +63,7 @@ describe.skipIf(!hasDb)("compliance routes", () => {
   // sequential single-writer test execution (vitest.config.ts's
   // fileParallelism: false) means the most recent one by timestamp right
   // after a call is reliably the one that call just created.
-  async function trackMostRecentExportLogEntity(): Promise<string> {
+  async function mostRecentExportLogEntityId(): Promise<string> {
     const db = getDb();
     const [row] = await db
       .select({ entityId: schema.auditLogEntries.entityId })
@@ -73,7 +71,6 @@ describe.skipIf(!hasDb)("compliance routes", () => {
       .where(eq(schema.auditLogEntries.action, "audit_log_exported"))
       .orderBy(desc(schema.auditLogEntries.timestamp))
       .limit(1);
-    cleanupEntityIds.push(row!.entityId);
     return row!.entityId;
   }
 
@@ -123,8 +120,6 @@ describe.skipIf(!hasDb)("compliance routes", () => {
     const rows = (await res.json()) as AuditRow[];
     expect(rows.length).toBeGreaterThanOrEqual(1);
     expect(rows.every((r) => r.entityType === marker)).toBe(true);
-
-    await trackMostRecentExportLogEntity();
   });
 
   it("returns CSV when format=csv", async () => {
@@ -145,8 +140,6 @@ describe.skipIf(!hasDb)("compliance routes", () => {
     const csv = await res.text();
     expect(csv.split("\r\n")[0]).toContain("record_hash");
     expect(csv).toContain(marker);
-
-    await trackMostRecentExportLogEntity();
   });
 
   it("returns 400 for an invalid format value", async () => {
@@ -177,7 +170,7 @@ describe.skipIf(!hasDb)("compliance routes", () => {
     });
     expect(res.status).toBe(200);
 
-    const loggedEntityId = await trackMostRecentExportLogEntity();
+    const loggedEntityId = await mostRecentExportLogEntityId();
     const [logged] = await getDb()
       .select()
       .from(schema.auditLogEntries)

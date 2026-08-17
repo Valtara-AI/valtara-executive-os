@@ -1,10 +1,16 @@
 // Requires a live Postgres. Uses packages/audit's real AuditLogger so the
-// rows under test are genuine chain-linked entries, not hand-built fixtures.
+// rows under test are genuine chain-linked entries, not hand-built
+// fixtures.
+//
+// No cleanup: audit_log_entries is RLS-immutable by design (SEC-001 §6,
+// proved in packages/database's audit-log-immutability.test.ts) - a
+// db.delete() against it has no effect for any role this app ever
+// connects as, so there's nothing a cleanup block could actually do. Rows
+// this file creates are marker-prefixed (Date.now()-based entityType) and
+// just accumulate harmlessly, same as audit-logger.test.ts already does.
 
 import { randomUUID } from "node:crypto";
-import { afterEach, describe, expect, it } from "vitest";
-import { eq } from "drizzle-orm";
-import { getDb, schema } from "@vex-os/database";
+import { describe, expect, it } from "vitest";
 import { AuditLogger } from "@vex-os/audit";
 import {
   queryAuditLogForExport,
@@ -16,14 +22,6 @@ const hasDb = Boolean(process.env.DATABASE_URL);
 
 describe.skipIf(!hasDb)("export-audit-log", () => {
   const logger = new AuditLogger();
-  const cleanupEntityIds: string[] = [];
-
-  afterEach(async () => {
-    const db = getDb();
-    for (const entityId of cleanupEntityIds.splice(0)) {
-      await db.delete(schema.auditLogEntries).where(eq(schema.auditLogEntries.entityId, entityId));
-    }
-  });
 
   async function logEntry(overrides?: {
     entityType?: string;
@@ -31,7 +29,6 @@ describe.skipIf(!hasDb)("export-audit-log", () => {
     metadata?: Record<string, unknown>;
   }) {
     const entityId = randomUUID();
-    cleanupEntityIds.push(entityId);
     return logger.log({
       actorId: overrides?.actorId ?? "actor-1",
       actorRole: "Executive",
