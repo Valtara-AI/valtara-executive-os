@@ -4,23 +4,17 @@
 // package, since that's a per-request session concern rather than
 // something about *how Google's OAuth endpoints work*.
 
-import { createHash, randomBytes } from "node:crypto";
 import type { OAuthTokenSet } from "../types.js";
+import { generatePkcePair, type PkcePair } from "../pkce.js";
 
 const AUTHORIZATION_ENDPOINT = "https://accounts.google.com/o/oauth2/v2/auth";
 const TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token";
 
-export interface PkcePair {
-  codeVerifier: string;
-  codeChallenge: string;
-}
-
-/** RFC 7636 PKCE: a random verifier and its S256 challenge. */
-export function generatePkcePair(): PkcePair {
-  const codeVerifier = randomBytes(32).toString("base64url");
-  const codeChallenge = createHash("sha256").update(codeVerifier).digest("base64url");
-  return { codeVerifier, codeChallenge };
-}
+// Re-exported for backward compatibility - callers (including this
+// package's own google-connection.ts and existing tests) import PKCE
+// generation from here. The implementation itself lives in ../pkce.ts now
+// that Microsoft (Sprint 5) needs the identical RFC 7636 logic.
+export { generatePkcePair, type PkcePair };
 
 function getClientCredentials() {
   const clientId = process.env.GOOGLE_CLIENT_ID;

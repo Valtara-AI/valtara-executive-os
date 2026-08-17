@@ -1,8 +1,8 @@
 # @vex-os/integrations
 
-Gmail + Google Calendar landed Sprint 4. Per the CLAUDE.md Sprint Plan, the rest land:
+Gmail + Google Calendar landed Sprint 4. Outlook Mail + Calendar landed Sprint 5. Per the
+CLAUDE.md Sprint Plan, the rest lands:
 
-- Sprint 5 — Outlook Mail + Calendar
 - Sprint 6 — Slack
 
 ## Contract
@@ -28,10 +28,17 @@ inserts the `external_actions` row _before_ calling the provider API — the Pos
 record isn't approved, so an unapproved write is never attempted, not merely logged after the
 fact (DL-ARCH-005).
 
-**`GoogleMailAdapter` and `GoogleCalendarAdapter` share one stored token** (`provider: "google"`)
-rather than two — connecting via either one requests the union of both scope sets in a single
-consent screen. See `src/google/scopes.ts` for why this is a deliberate simplification rather
-than Google's full incremental-authorization pattern.
+**`GoogleMailAdapter`/`GoogleCalendarAdapter`** (provider `"google"`) and
+**`OutlookMailAdapter`/`OutlookCalendarAdapter`** (provider `"microsoft"`) each share one stored
+token per provider rather than two — connecting via either adapter for a given provider requests
+the union of both scope sets in a single consent screen. See `src/google/scopes.ts` /
+`src/microsoft/scopes.ts` for why this is a deliberate simplification rather than each provider's
+full incremental-authorization pattern.
+
+The Microsoft adapters call the Microsoft identity platform v2.0 and Graph v1.0 REST endpoints
+directly (Authorization Code + PKCE), the same way the Google adapters call Google's OAuth/API
+endpoints directly — not via `@azure/msal-node` (API-001 §3.3's literal suggestion) or
+`googleapis`. See DL-ARCH-008 in the Decision Log for the rationale.
 
 Read operations are deliberately scoped to what a caller asks for (a search query, a time
 range) — no bulk historical mailbox/calendar download into VEX-OS storage (API-001 §3.1's data
