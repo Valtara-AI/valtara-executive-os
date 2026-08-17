@@ -168,3 +168,17 @@ export interface RefreshTokenRevocation {
   tokenId: string;
   revokedAt: string;
 }
+
+// Added post-Sprint-2: the Executive-Delegate relationship (PRD §3.2),
+// not in SRS §5.1's original entity list.
+export type DelegateInvitationStatus = "pending" | "accepted" | "declined" | "revoked";
+
+export interface DelegateLink {
+  id: string;
+  executiveId: string;
+  delegateEmail: string;
+  status: DelegateInvitationStatus;
+  invitedAt: string;
+  respondedAt: string | null;
+  revokedAt: string | null;
+}

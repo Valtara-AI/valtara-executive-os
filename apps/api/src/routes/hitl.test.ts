@@ -183,4 +183,51 @@ describe.skipIf(!hasDb)("hitl queue routes", () => {
     });
     expect(res.status).toBe(404);
   });
+
+  it("an accepted Delegate can approve an item on the executive's behalf", async () => {
+    const app = createApp();
+    const { item, executive } = await seedPendingHitlItem("delegate-accepted");
+    const delegateEmail = `delegate-${Date.now()}@example.com`;
+    await getDb()
+      .insert(schema.delegateLinks)
+      .values({ executiveId: executive.id, delegateEmail, status: "accepted" });
+    const delegateToken = await signToken({ email: delegateEmail, role: "Delegate" });
+
+    const res = await app.request(`/api/v1/hitl/queue/${item.id}/approve`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${delegateToken}` },
+    });
+    expect(res.status).toBe(200);
+
+    // actioned_by is FK'd to executives.id, so it records the owning
+    // executive - not the delegate, who has no executives row.
+    expect((await jsonBody<{ actionedBy: string }>(res)).data?.actionedBy).toBe(executive.id);
+  });
+
+  it("a Delegate with only a pending (not yet accepted) invitation cannot access the item", async () => {
+    const app = createApp();
+    const { item, executive } = await seedPendingHitlItem("delegate-pending");
+    const delegateEmail = `delegate-pending-only-${Date.now()}@example.com`;
+    await getDb()
+      .insert(schema.delegateLinks)
+      .values({ executiveId: executive.id, delegateEmail, status: "pending" });
+    const delegateToken = await signToken({ email: delegateEmail, role: "Delegate" });
+
+    const res = await app.request(`/api/v1/hitl/queue/${item.id}`, {
+      headers: { Authorization: `Bearer ${delegateToken}` },
+    });
+    expect(res.status).toBe(404);
+  });
+
+  it("rejects an Administrator - no access to executive content", async () => {
+    const app = createApp();
+    const adminToken = await signToken({
+      email: `admin-${Date.now()}@example.com`,
+      role: "Administrator",
+    });
+    const res = await app.request("/api/v1/hitl/queue", {
+      headers: { Authorization: `Bearer ${adminToken}` },
+    });
+    expect(res.status).toBe(403);
+  });
 });

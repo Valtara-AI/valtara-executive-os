@@ -1,5 +1,6 @@
 import type {
   AgentStatus,
+  DelegateInvitationStatus,
   HitlMode,
   HitlStatus,
   OnboardingStatus,
@@ -32,6 +33,13 @@ export const ONBOARDING_STATUSES: readonly OnboardingStatus[] = [
   "not_started",
   "in_progress",
   "complete",
+];
+
+export const DELEGATE_INVITATION_STATUSES: readonly DelegateInvitationStatus[] = [
+  "pending",
+  "accepted",
+  "declined",
+  "revoked",
 ];
 
 // SRS FR-OA-03: minimum 2, maximum 8 agents proposed per executive at onboarding.

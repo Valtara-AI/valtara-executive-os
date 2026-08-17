@@ -1,44 +1,65 @@
 // API-001 §2.6 HITL queue endpoints, mounted at /api/v1/hitl/queue.
+// Executive and Delegate both get access (PRD §3.2: a Delegate "reviews
+// agent outputs on behalf of the executive... manages HITL approval
+// queue") via resolveAccessibleExecutiveIds - an Executive sees only their
+// own items, a Delegate sees every executive with an *accepted* link to
+// their email.
 //
-// Same Delegate-access gap noted in routes/agents.ts: SRS describes
-// Delegates managing the HITL queue on an executive's behalf, but no
-// Executive-Delegate relationship exists in the schema to authorize that
-// against. Executive-role-only until that data model exists.
+// hitl_queue_items.actioned_by is FK'd to executives.id, so it always
+// records the *owning* executive regardless of who actually clicked
+// (a Delegate has no executives row to point it at). The real actor -
+// Delegate or Executive - is recorded in the audit log's actorId/actorRole
+// instead, which has no such FK constraint.
 //
-// "Triggers downstream action" (HITL-02) is honestly scoped to what Sprint
-// 2 can do: no real external integrations exist yet (Gmail/Slack/etc. are
-// Sprint 4+), so approving an item finalizes it within VEX-OS (marks the
-// TaskOutput approved, audit-logs it) rather than actually sending or
+// "Triggers downstream action" (HITL-02) is honestly scoped to what's
+// built so far: no real external integrations exist yet (Gmail/Slack/etc.
+// are Sprint 4+), so approving an item finalizes it within VEX-OS (marks
+// the TaskOutput approved, audit-logs it) rather than actually sending or
 // posting anything anywhere.
 
 import { Hono } from "hono";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { getDb, schema } from "@vex-os/database";
-import { fail, ok } from "@vex-os/shared";
+import { fail, ok, type JwtPayload } from "@vex-os/shared";
 import { logHitlEvent } from "@vex-os/audit";
 import type { AuthedVariables } from "../middleware/jwt.js";
 import { requireRole } from "../middleware/rbac.js";
 import { resolveExecutive } from "../domains/onboarding/resolve-executive.js";
+import { resolveAccessibleExecutiveIds } from "../domains/delegates/resolve-accessible-executive-ids.js";
 
 export const hitlRoute = new Hono<{ Variables: AuthedVariables }>();
 
-hitlRoute.use("*", requireRole("Executive"));
+hitlRoute.use("*", requireRole("Executive", "Delegate"));
 
-async function loadOwnedPendingItem(executiveId: string, itemId: string) {
+// Executives have an executives.id; Delegates don't (they never go through
+// onboarding). This is what actually identifies the acting user in the
+// audit log - resolveExecutive()'s id for an Executive, the JWT's stable
+// subject claim for a Delegate.
+async function resolveActorId(user: JwtPayload): Promise<string> {
+  if (user.role === "Executive") return (await resolveExecutive(user)).id;
+  return user.sub;
+}
+
+async function loadAccessibleItem(user: JwtPayload, itemId: string) {
+  const accessibleExecutiveIds = await resolveAccessibleExecutiveIds(user);
+  if (accessibleExecutiveIds.length === 0) return undefined;
+
   const [item] = await getDb()
     .select()
     .from(schema.hitlQueueItems)
     .where(eq(schema.hitlQueueItems.id, itemId));
-  if (!item || item.executiveId !== executiveId) return undefined;
+  if (!item || !accessibleExecutiveIds.includes(item.executiveId)) return undefined;
   return item;
 }
 
 hitlRoute.get("/", async (c) => {
-  const executive = await resolveExecutive(c.get("user"));
-  const statusFilter = c.req.query("status") ?? "pending";
+  const user = c.get("user");
+  const accessibleExecutiveIds = await resolveAccessibleExecutiveIds(user);
+  if (accessibleExecutiveIds.length === 0) return c.json(ok([]));
 
-  const conditions = [eq(schema.hitlQueueItems.executiveId, executive.id)];
+  const statusFilter = c.req.query("status") ?? "pending";
+  const conditions = [inArray(schema.hitlQueueItems.executiveId, accessibleExecutiveIds)];
   if (statusFilter !== "all") {
     conditions.push(
       eq(
@@ -58,8 +79,7 @@ hitlRoute.get("/", async (c) => {
 });
 
 hitlRoute.get("/:itemId", async (c) => {
-  const executive = await resolveExecutive(c.get("user"));
-  const item = await loadOwnedPendingItem(executive.id, c.req.param("itemId"));
+  const item = await loadAccessibleItem(c.get("user"), c.req.param("itemId"));
   if (!item) return c.json(fail("NOT_FOUND", "HITL queue item not found."), 404);
   return c.json(ok(item));
 });
@@ -69,13 +89,13 @@ async function finalizeItem(
   taskOutputId: string | null,
   status: "approved" | "edited" | "rejected",
   patch: { finalOutput?: string; rejectionReason?: string },
-  executiveId: string,
+  owningExecutiveId: string,
 ) {
   const db = getDb();
 
   const [updated] = await db
     .update(schema.hitlQueueItems)
-    .set({ status, actionedAt: new Date(), actionedBy: executiveId, ...patch })
+    .set({ status, actionedAt: new Date(), actionedBy: owningExecutiveId, ...patch })
     .where(eq(schema.hitlQueueItems.id, itemId))
     .returning();
 
@@ -90,18 +110,18 @@ async function finalizeItem(
 }
 
 hitlRoute.post("/:itemId/approve", async (c) => {
-  const executive = await resolveExecutive(c.get("user"));
-  const item = await loadOwnedPendingItem(executive.id, c.req.param("itemId"));
+  const user = c.get("user");
+  const item = await loadAccessibleItem(user, c.req.param("itemId"));
   if (!item) return c.json(fail("NOT_FOUND", "HITL queue item not found."), 404);
   if (item.status !== "pending") {
     return c.json(fail("INVALID_STATE", `Item is already "${item.status}".`), 409);
   }
 
-  const updated = await finalizeItem(item.id, item.taskOutputId, "approved", {}, executive.id);
+  const updated = await finalizeItem(item.id, item.taskOutputId, "approved", {}, item.executiveId);
 
   await logHitlEvent({
-    actorId: executive.id,
-    actorRole: "Executive",
+    actorId: await resolveActorId(user),
+    actorRole: user.role,
     entityId: item.id,
     action: "hitl_approved",
     input: { originalOutput: item.originalOutput },
@@ -113,8 +133,8 @@ hitlRoute.post("/:itemId/approve", async (c) => {
 const EditBodySchema = z.object({ finalOutput: z.string().min(1) });
 
 hitlRoute.post("/:itemId/edit", async (c) => {
-  const executive = await resolveExecutive(c.get("user"));
-  const item = await loadOwnedPendingItem(executive.id, c.req.param("itemId"));
+  const user = c.get("user");
+  const item = await loadAccessibleItem(user, c.req.param("itemId"));
   if (!item) return c.json(fail("NOT_FOUND", "HITL queue item not found."), 404);
   if (item.status !== "pending") {
     return c.json(fail("INVALID_STATE", `Item is already "${item.status}".`), 409);
@@ -133,12 +153,12 @@ hitlRoute.post("/:itemId/edit", async (c) => {
     item.taskOutputId,
     "edited",
     { finalOutput: parsed.data.finalOutput },
-    executive.id,
+    item.executiveId,
   );
 
   await logHitlEvent({
-    actorId: executive.id,
-    actorRole: "Executive",
+    actorId: await resolveActorId(user),
+    actorRole: user.role,
     entityId: item.id,
     action: "hitl_edited",
     input: { originalOutput: item.originalOutput },
@@ -151,8 +171,8 @@ hitlRoute.post("/:itemId/edit", async (c) => {
 const RejectBodySchema = z.object({ reason: z.string().optional() });
 
 hitlRoute.post("/:itemId/reject", async (c) => {
-  const executive = await resolveExecutive(c.get("user"));
-  const item = await loadOwnedPendingItem(executive.id, c.req.param("itemId"));
+  const user = c.get("user");
+  const item = await loadAccessibleItem(user, c.req.param("itemId"));
   if (!item) return c.json(fail("NOT_FOUND", "HITL queue item not found."), 404);
   if (item.status !== "pending") {
     return c.json(fail("INVALID_STATE", `Item is already "${item.status}".`), 409);
@@ -174,12 +194,12 @@ hitlRoute.post("/:itemId/reject", async (c) => {
     item.taskOutputId,
     "rejected",
     { rejectionReason: parsed.data.reason },
-    executive.id,
+    item.executiveId,
   );
 
   await logHitlEvent({
-    actorId: executive.id,
-    actorRole: "Executive",
+    actorId: await resolveActorId(user),
+    actorRole: user.role,
     entityId: item.id,
     action: "hitl_rejected",
     input: { originalOutput: item.originalOutput },

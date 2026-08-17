@@ -10,7 +10,14 @@ import { jsonb, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 export const auditLogEntries = pgTable("audit_log_entries", {
   id: uuid("id").primaryKey().defaultRandom(),
   timestamp: timestamp("timestamp", { withTimezone: true }).notNull().defaultNow(),
-  actorId: uuid("actor_id").notNull(),
+  // text, not uuid (migration 0003+): actor_id originally assumed every
+  // actor was an Executive (a real UUID). Now that Delegates can act too
+  // (hitl.ts's resolveActorId), their identity is the JWT's `sub` claim -
+  // an OAuth-provider-qualified string that isn't guaranteed to be
+  // UUID-shaped (Google's subject ids are plain numeric strings; only
+  // Microsoft's happen to look like GUIDs). uuid was too narrow a type for
+  // "whoever actually did this" in general.
+  actorId: text("actor_id").notNull(),
   actorRole: text("actor_role").notNull(),
   entityType: text("entity_type").notNull(),
   entityId: uuid("entity_id").notNull(),

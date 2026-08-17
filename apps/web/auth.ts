@@ -15,13 +15,50 @@ import MicrosoftEntraID from "next-auth/providers/microsoft-entra-id";
 import { importPKCS8, SignJWT } from "jose";
 import type { Role } from "@vex-os/shared";
 
-// SEC-001 §3.2: every new sign-up gets the Executive role by default; the
-// only account-creation surface in Sprint 1 is "the executive signs up",
-// there is no admin-invite or delegate-invite flow yet. Role promotion to
-// Delegate/Administrator is out of Sprint 1 scope.
+// SEC-001 §3.2 default for a genuinely new user with no Executive row and
+// no delegate invitation anywhere - see resolveRoleForNewSignIn below for
+// the real precedence logic (added post-Sprint-2 alongside the
+// Executive-Delegate relationship; every earlier sign-up hardcoded this
+// value, meaning nothing could ever actually become a Delegate).
 const DEFAULT_ROLE: Role = "Executive";
 
 const ACCESS_TOKEN_TTL_SECONDS = 60 * 60; // 1 hour, matching SEC-001 §3.1
+
+// apps/web has no direct DB access by design (SAD's layer diagram: all
+// persistence goes through apps/api) - so role resolution at sign-in,
+// which needs to check for an existing Executive row or a pending/accepted
+// delegate_links row, is a server-to-server call rather than a query here.
+// Guarded by INTERNAL_API_SECRET (a shared secret, not a user JWT - this
+// runs server-side inside the NextAuth callback, never reachable from a
+// browser). On any failure, falls back to DEFAULT_ROLE rather than blocking
+// sign-in: worst case a real Delegate's first sign-in mints an Executive
+// token, which grants them nothing beyond their own isolated (auto-created)
+// executive profile - not a privilege escalation, just a UX miss they can
+// resolve by signing in again once apps/api is reachable.
+async function resolveRoleForNewSignIn(email: string): Promise<Role> {
+  const apiUrl = process.env.API_URL;
+  const internalSecret = process.env.INTERNAL_API_SECRET;
+  if (!apiUrl || !internalSecret) {
+    console.error(
+      "API_URL or INTERNAL_API_SECRET not set; defaulting new sign-in to",
+      DEFAULT_ROLE,
+    );
+    return DEFAULT_ROLE;
+  }
+
+  try {
+    const res = await fetch(
+      `${apiUrl}/api/v1/internal/resolve-role?email=${encodeURIComponent(email)}`,
+      { headers: { "X-Internal-Secret": internalSecret } },
+    );
+    if (!res.ok) throw new Error(`resolve-role responded ${res.status}`);
+    const body = (await res.json()) as { data: { role: Role } | null };
+    return body.data?.role ?? DEFAULT_ROLE;
+  } catch (err) {
+    console.error("Failed to resolve role for new sign-in, defaulting to", DEFAULT_ROLE, err);
+    return DEFAULT_ROLE;
+  }
+}
 
 let cachedPrivateKey: Awaited<ReturnType<typeof importPKCS8>> | undefined;
 
@@ -70,9 +107,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        // First sign-in this session: stamp the default role. NextAuth's
-        // own `token.sub` is already the stable provider-qualified user id.
-        token.role = DEFAULT_ROLE;
+        // First sign-in this session. NextAuth's own `token.sub` is
+        // already the stable provider-qualified user id; `user.email`
+        // (populated from the OAuth profile) is what role resolution keys
+        // on, matching how apps/api's resolveExecutive/resolveAccessibleExecutiveIds
+        // key everything else on email too.
+        token.role = user.email ? await resolveRoleForNewSignIn(user.email) : DEFAULT_ROLE;
       }
       return token;
     },

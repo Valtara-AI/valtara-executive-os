@@ -139,4 +139,41 @@ describe.skipIf(!hasDb)("tasks routes", () => {
     });
     expect(res.status).toBe(404);
   });
+
+  it("an accepted Delegate can list and view tasks, but not cancel them", async () => {
+    const app = createApp();
+    const { executive, task } = await seedExecutiveAgentAndTask("delegate-read");
+    const delegateEmail = `task-delegate-${Date.now()}@example.com`;
+    await getDb()
+      .insert(schema.delegateLinks)
+      .values({ executiveId: executive.id, delegateEmail, status: "accepted" });
+    const delegateToken = await signToken({ email: delegateEmail, role: "Delegate" });
+    const headers = { Authorization: `Bearer ${delegateToken}` };
+
+    const listRes = await app.request("/api/v1/tasks", { headers });
+    expect((await jsonBody<{ id: string }[]>(listRes)).data?.some((t) => t.id === task.id)).toBe(
+      true,
+    );
+
+    const getRes = await app.request(`/api/v1/tasks/${task.id}`, { headers });
+    expect(getRes.status).toBe(200);
+
+    const cancelRes = await app.request(`/api/v1/tasks/${task.id}`, { method: "DELETE", headers });
+    expect(cancelRes.status).toBe(403);
+  });
+
+  it("a Delegate with only a pending invitation cannot see the executive's tasks", async () => {
+    const app = createApp();
+    const { executive, task } = await seedExecutiveAgentAndTask("delegate-pending-task");
+    const delegateEmail = `task-delegate-pending-${Date.now()}@example.com`;
+    await getDb()
+      .insert(schema.delegateLinks)
+      .values({ executiveId: executive.id, delegateEmail, status: "pending" });
+    const delegateToken = await signToken({ email: delegateEmail, role: "Delegate" });
+
+    const res = await app.request(`/api/v1/tasks/${task.id}`, {
+      headers: { Authorization: `Bearer ${delegateToken}` },
+    });
+    expect(res.status).toBe(404);
+  });
 });

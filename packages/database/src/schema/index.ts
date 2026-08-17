@@ -12,3 +12,4 @@ export * from "./integration-token.js";
 export * from "./onboarding-session.js";
 export * from "./external-action.js";
 export * from "./refresh-token-revocation.js";
+export * from "./delegate-link.js";

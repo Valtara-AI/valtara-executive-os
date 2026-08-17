@@ -33,3 +33,15 @@ export const onboardingSessionStatusEnum = pgEnum("onboarding_session_status", [
   "in_progress",
   "complete",
 ]);
+
+// Added post-Sprint-2 (migration 0003): models the Executive-Delegate
+// relationship SRS describes (PRD §3.2's "Chief of Staff / EA" persona)
+// but the original schema never had a way to represent. Full invite +
+// accept flow, not auto-linked: "pending" grants no access at all -
+// resolve-accessible-executive-ids.ts only counts "accepted".
+export const delegateInvitationStatusEnum = pgEnum("delegate_invitation_status", [
+  "pending",
+  "accepted",
+  "declined",
+  "revoked",
+]);
