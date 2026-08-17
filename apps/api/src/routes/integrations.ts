@@ -1,7 +1,7 @@
 // API-001 §2.8, mounted at /api/v1/integrations. GET /:provider/callback
 // is deliberately NOT behind jwtMiddleware - see
 // domains/integrations/oauth-state.ts for why (it's a browser redirect
-// from Google, not an API call with a Bearer token).
+// from the provider, not an API call with a Bearer token).
 
 import { Hono } from "hono";
 import { eq } from "drizzle-orm";
@@ -12,6 +12,11 @@ import {
   completeGoogleConnection,
   disconnectGoogle,
   isGoogleConnected,
+  beginMicrosoftAuthorization,
+  buildMicrosoftAuthorizationUrl,
+  completeMicrosoftConnection,
+  disconnectMicrosoft,
+  isMicrosoftConnected,
 } from "@vex-os/integrations";
 import { fail, ok } from "@vex-os/shared";
 import type { AuthedVariables } from "../middleware/jwt.js";
@@ -21,9 +26,9 @@ import { resolveExecutive } from "../domains/onboarding/resolve-executive.js";
 import { signOAuthState, verifyOAuthState } from "../domains/integrations/oauth-state.js";
 import { logTaskEvent } from "@vex-os/audit";
 
-// Only Google exists as of Sprint 4 - Outlook (Sprint 5) and Slack
-// (Sprint 6) add entries here, not new route files, once they land.
-const SUPPORTED_PROVIDERS = ["google"] as const;
+// Google landed Sprint 4, Microsoft (Outlook) Sprint 5. Slack (Sprint 6)
+// adds an entry here, not a new route file, once it lands.
+const SUPPORTED_PROVIDERS = ["google", "microsoft"] as const;
 type SupportedProvider = (typeof SUPPORTED_PROVIDERS)[number];
 
 function isSupportedProvider(value: string): value is SupportedProvider {
@@ -47,7 +52,10 @@ integrationsRoute.get("/", async (c) => {
   const statuses = await Promise.all(
     SUPPORTED_PROVIDERS.map(async (provider) => ({
       provider,
-      connected: provider === "google" ? await isGoogleConnected(executive.id) : false,
+      connected:
+        provider === "google"
+          ? await isGoogleConnected(executive.id)
+          : await isMicrosoftConnected(executive.id),
     })),
   );
   return c.json(ok(statuses));
@@ -63,14 +71,22 @@ integrationsRoute.get("/:provider/authorize", async (c) => {
   }
   const executive = await resolveExecutive(c.get("user"));
 
+  // PKCE's real data dependency (same for both providers): codeVerifier
+  // must exist before state (which embeds it) can be signed, and
+  // codeChallenge (needed for the URL) is derived from that same
+  // codeVerifier - so generate the pair first, sign state from it, then
+  // build the URL from state + challenge.
   if (provider === "google") {
-    // PKCE's real data dependency: codeVerifier must exist before state
-    // (which embeds it) can be signed, and codeChallenge (needed for the
-    // URL) is derived from that same codeVerifier - so generate the pair
-    // first, sign state from it, then build the URL from state + challenge.
     const { codeVerifier, codeChallenge } = beginGoogleAuthorization();
     const state = await signOAuthState({ executiveId: executive.id, provider, codeVerifier });
     const url = buildGoogleAuthorizationUrl(codeChallenge, state);
+    return c.json(ok({ url }));
+  }
+
+  if (provider === "microsoft") {
+    const { codeVerifier, codeChallenge } = beginMicrosoftAuthorization();
+    const state = await signOAuthState({ executiveId: executive.id, provider, codeVerifier });
+    const url = buildMicrosoftAuthorizationUrl(codeChallenge, state);
     return c.json(ok({ url }));
   }
 
@@ -89,6 +105,8 @@ integrationsRoute.delete("/:provider", async (c) => {
 
   if (provider === "google") {
     await disconnectGoogle(executive.id);
+  } else if (provider === "microsoft") {
+    await disconnectMicrosoft(executive.id);
   }
 
   await logTaskEvent({
@@ -125,6 +143,8 @@ integrationsCallbackRoute.get("/:provider/callback", async (c) => {
 
     if (provider === "google") {
       await completeGoogleConnection(statePayload.executiveId, code, statePayload.codeVerifier);
+    } else if (provider === "microsoft") {
+      await completeMicrosoftConnection(statePayload.executiveId, code, statePayload.codeVerifier);
     } else {
       throw new Error(`"${provider}" is not a supported integration.`);
     }

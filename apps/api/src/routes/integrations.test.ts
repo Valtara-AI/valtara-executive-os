@@ -1,8 +1,8 @@
 // DB-gated (needs DB_ENCRYPTION_KEY too, for token-store). Mocks the
-// global fetch for Google's token endpoint so the full authorize ->
-// callback round trip is testable without real Google credentials - see
-// packages/integrations' README for why that's the only piece that can't
-// be exercised for real in this environment.
+// global fetch for the provider's token endpoint so the full authorize ->
+// callback round trip is testable without real Google/Microsoft
+// credentials - see packages/integrations' README for why that's the only
+// piece that can't be exercised for real in this environment.
 
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { eq } from "drizzle-orm";
@@ -13,7 +13,8 @@ import { createTestJwtSigner } from "../test-utils/jwt.js";
 const hasDb =
   Boolean(process.env.DATABASE_URL) &&
   Boolean(process.env.DB_ENCRYPTION_KEY) &&
-  Boolean(process.env.GOOGLE_CLIENT_ID);
+  Boolean(process.env.GOOGLE_CLIENT_ID) &&
+  Boolean(process.env.MICROSOFT_CLIENT_ID);
 
 interface ApiEnvelope<T = Record<string, unknown>> {
   success: boolean;
@@ -55,7 +56,7 @@ describe.skipIf(!hasDb)("integrations routes", () => {
     return email;
   }
 
-  it("GET / lists google as not connected before any connection exists", async () => {
+  it("GET / lists google and microsoft as not connected before any connection exists", async () => {
     const app = createApp();
     const token = await signToken({ email: freshEmail("list"), role: "Executive" });
 
@@ -64,7 +65,10 @@ describe.skipIf(!hasDb)("integrations routes", () => {
     });
     expect(res.status).toBe(200);
     const body = await jsonBody<{ provider: string; connected: boolean }[]>(res);
-    expect(body.data).toEqual([{ provider: "google", connected: false }]);
+    expect(body.data).toEqual([
+      { provider: "google", connected: false },
+      { provider: "microsoft", connected: false },
+    ]);
   });
 
   it("GET /:provider/authorize returns a Google consent URL with PKCE and state params", async () => {
@@ -82,11 +86,28 @@ describe.skipIf(!hasDb)("integrations routes", () => {
     expect(url.searchParams.get("state")).toBeTruthy();
   });
 
+  it("GET /:provider/authorize returns a Microsoft consent URL with PKCE and state params", async () => {
+    const app = createApp();
+    const token = await signToken({ email: freshEmail("ms-authorize"), role: "Executive" });
+
+    const res = await app.request("/api/v1/integrations/microsoft/authorize", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(res.status).toBe(200);
+    const body = await jsonBody<{ url: string }>(res);
+    const url = new URL(body.data!.url);
+    expect(url.origin + url.pathname).toBe(
+      "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
+    );
+    expect(url.searchParams.get("code_challenge_method")).toBe("S256");
+    expect(url.searchParams.get("state")).toBeTruthy();
+  });
+
   it("returns 400 for an unsupported provider", async () => {
     const app = createApp();
     const token = await signToken({ email: freshEmail("unsupported"), role: "Executive" });
 
-    const res = await app.request("/api/v1/integrations/outlook/authorize", {
+    const res = await app.request("/api/v1/integrations/slack/authorize", {
       headers: { Authorization: `Bearer ${token}` },
     });
     expect(res.status).toBe(400);
@@ -137,7 +158,10 @@ describe.skipIf(!hasDb)("integrations routes", () => {
 
     const listRes = await app.request("/api/v1/integrations", { headers });
     const listBody = await jsonBody<{ provider: string; connected: boolean }[]>(listRes);
-    expect(listBody.data).toEqual([{ provider: "google", connected: true }]);
+    expect(listBody.data).toEqual([
+      { provider: "google", connected: true },
+      { provider: "microsoft", connected: false },
+    ]);
 
     const disconnectRes = await app.request("/api/v1/integrations/google", {
       method: "DELETE",
@@ -145,6 +169,63 @@ describe.skipIf(!hasDb)("integrations routes", () => {
     });
     expect(disconnectRes.status).toBe(200);
     expect(await getTokens(executive!.id, "google")).toBeUndefined();
+  });
+
+  it("full round trip for Microsoft: authorize -> callback connects, list reflects it, disconnect removes it", async () => {
+    const app = createApp();
+    const email = freshEmail("ms-roundtrip");
+    const token = await signToken({ email, role: "Executive" });
+    const headers = { Authorization: `Bearer ${token}` };
+
+    const authorizeRes = await app.request("/api/v1/integrations/microsoft/authorize", { headers });
+    const { url } = (await jsonBody<{ url: string }>(authorizeRes)).data!;
+    const state = new URL(url).searchParams.get("state")!;
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            access_token: "ms-roundtrip-access-token",
+            refresh_token: "ms-roundtrip-refresh-token",
+            expires_in: 3600,
+            scope: "https://graph.microsoft.com/Mail.Read",
+            token_type: "Bearer",
+          }),
+      }),
+    );
+
+    const callbackRes = await app.request(
+      `/api/v1/integrations/microsoft/callback?code=fake-auth-code&state=${encodeURIComponent(state)}`,
+      { redirect: "manual" },
+    );
+    expect(callbackRes.status).toBe(302);
+    expect(callbackRes.headers.get("location")).toContain("integration=connected");
+
+    const db = getDb();
+    const [executive] = await db
+      .select()
+      .from(schema.executives)
+      .where(eq(schema.executives.email, email));
+    const tokens = await getTokens(executive!.id, "microsoft");
+    expect(tokens?.accessToken).toBe("ms-roundtrip-access-token");
+
+    vi.unstubAllGlobals();
+
+    const listRes = await app.request("/api/v1/integrations", { headers });
+    const listBody = await jsonBody<{ provider: string; connected: boolean }[]>(listRes);
+    expect(listBody.data).toEqual([
+      { provider: "google", connected: false },
+      { provider: "microsoft", connected: true },
+    ]);
+
+    const disconnectRes = await app.request("/api/v1/integrations/microsoft", {
+      method: "DELETE",
+      headers,
+    });
+    expect(disconnectRes.status).toBe(200);
+    expect(await getTokens(executive!.id, "microsoft")).toBeUndefined();
   });
 
   it("callback redirects with an error and stores nothing for a tampered state token", async () => {
