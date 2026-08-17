@@ -25,7 +25,10 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ThemeToggle } from "@/components/theme-toggle";
 
-const PROVIDER_LABEL: Record<string, string> = { google: "Google (Gmail + Calendar)" };
+const PROVIDER_LABEL: Record<string, string> = {
+  google: "Google (Gmail + Calendar)",
+  microsoft: "Microsoft (Outlook Mail + Calendar)",
+};
 
 // useSearchParams (for ?integration=connected|error from the OAuth
 // callback redirect) requires a Suspense boundary in the App Router, or
