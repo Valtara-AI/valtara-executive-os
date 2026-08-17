@@ -2,7 +2,7 @@
   "name": "@vex-os/integrations",
   "version": "0.1.0",
   "private": true,
-  "description": "Email, calendar, and Slack integration adapters (Gmail + Calendar Sprint 4, Outlook Mail + Calendar Sprint 5 — see README.md)",
+  "description": "Email, calendar, and Slack integration adapters (Gmail + Calendar Sprint 4, Outlook Mail + Calendar Sprint 5, Slack Sprint 6 — see README.md)",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

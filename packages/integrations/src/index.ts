@@ -31,3 +31,16 @@ export {
   buildMicrosoftAuthorizationUrl,
   completeMicrosoftConnection,
 } from "./microsoft/microsoft-connection.js";
+export { SlackAdapter } from "./slack/slack-adapter.js";
+export { SLACK_PROVIDER, SLACK_SCOPES } from "./slack/scopes.js";
+export {
+  isSlackConnected,
+  disconnectSlack,
+  beginSlackAuthorization,
+  buildSlackAuthorizationUrl,
+  completeSlackConnection,
+} from "./slack/slack-connection.js";
+export {
+  InsufficientScopeError as SlackInsufficientScopeError,
+  SlackApiError,
+} from "./slack/authenticated-fetch.js";
