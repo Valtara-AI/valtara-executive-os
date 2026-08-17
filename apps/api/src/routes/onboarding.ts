@@ -7,12 +7,21 @@ import { z } from "zod";
 import { fail, ok } from "@vex-os/shared";
 import type { AuthedVariables } from "../middleware/jwt.js";
 import { requireRole } from "../middleware/rbac.js";
+import { llmRateLimit } from "../middleware/rate-limit.js";
 import * as onboardingEngine from "../domains/onboarding/engine.js";
 import { resolveExecutive } from "../domains/onboarding/resolve-executive.js";
 
 export const onboardingRoute = new Hono<{ Variables: AuthedVariables }>();
 
 onboardingRoute.use("*", requireRole("Executive"));
+
+// Stricter tier (SEC-001 §4: "LLM inference endpoints have stricter
+// limits") on top of the general per-user limit already applied at the
+// app.ts /executive/* mount - respond/complete are the only two endpoints
+// in this API that call the LLM synchronously within the request (see
+// rate-limit.ts's header for why the rest don't need this).
+onboardingRoute.use("/respond", llmRateLimit);
+onboardingRoute.use("/complete", llmRateLimit);
 
 onboardingRoute.post("/start", async (c) => {
   const user = c.get("user");

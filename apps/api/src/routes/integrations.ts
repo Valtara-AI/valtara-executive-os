@@ -27,6 +27,7 @@ import { fail, ok } from "@vex-os/shared";
 import type { AuthedVariables } from "../middleware/jwt.js";
 import { jwtMiddleware } from "../middleware/jwt.js";
 import { requireRole } from "../middleware/rbac.js";
+import { generalRateLimit } from "../middleware/rate-limit.js";
 import { resolveExecutive } from "../domains/onboarding/resolve-executive.js";
 import { signOAuthState, verifyOAuthState } from "../domains/integrations/oauth-state.js";
 import { logTaskEvent } from "@vex-os/audit";
@@ -50,6 +51,7 @@ export const integrationsRoute = new Hono<{ Variables: AuthedVariables }>();
 // entirely.
 integrationsRoute.use("*", jwtMiddleware);
 integrationsRoute.use("*", requireRole("Executive"));
+integrationsRoute.use("*", generalRateLimit);
 
 async function isProviderConnected(
   provider: SupportedProvider,

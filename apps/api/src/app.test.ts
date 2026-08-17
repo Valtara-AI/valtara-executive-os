@@ -12,13 +12,11 @@ vi.mock("./domains/onboarding/engine", () => ({
     .fn()
     .mockResolvedValue({ sessionId: "session-1", question: "What's your name?", done: false }),
   respond: vi.fn().mockResolvedValue({ question: "Next question", done: false }),
-  complete: vi
-    .fn()
-    .mockResolvedValue({
-      intelligenceProfileId: "ip-1",
-      voiceProfileId: "vp-1",
-      proposedAgents: [],
-    }),
+  complete: vi.fn().mockResolvedValue({
+    intelligenceProfileId: "ip-1",
+    voiceProfileId: "vp-1",
+    proposedAgents: [],
+  }),
   confirm: vi.fn().mockResolvedValue({ activatedAgents: [] }),
 }));
 
@@ -60,6 +58,13 @@ describe("GET /api/v1/health", () => {
     const res = await app.request("/api/v1/health");
     expect(res.status).toBe(200);
     expect(await jsonBody(res)).toEqual({ success: true, data: { status: "ok" }, error: null });
+  });
+
+  it("carries security headers on every response, including unauthenticated ones", async () => {
+    const app = createApp();
+    const res = await app.request("/api/v1/health");
+    expect(res.headers.get("X-Content-Type-Options")).toBe("nosniff");
+    expect(res.headers.get("Strict-Transport-Security")).toBeTruthy();
   });
 });
 

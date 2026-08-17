@@ -181,11 +181,12 @@ The following decisions are logged at document creation, representing the founda
 
 # 3. Pending Decisions
 
-The following decisions are required before Sprint 2 begins. Each must be logged as a completed entry before implementation starts.
+Decisions required before the noted milestone. Each must be logged as a completed entry before implementation starts.
 
-| Decision Required                           | Target Date      |
-| ------------------------------------------- | ---------------- |
-| DL-AI-002: Vector embedding model selection | Sprint 2 kickoff |
+| Decision Required                                                                                                                                                                                                                                    | Target Date                    |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
+| DL-AI-002: Vector embedding model selection                                                                                                                                                                                                          | Sprint 2 kickoff               |
+| DL-SEC-003: apps/web Next.js 14→16 upgrade to resolve known high/critical CVEs (XSS, SSRF, cache poisoning, DoS - no fix available on 14.x). CI's dependency-scan job (Sprint 7) reports this non-blocking until the upgrade is scoped and verified. | Before pilot launch (Sprint 8) |
 
 # 4. Document Approval
 

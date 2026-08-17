@@ -38,6 +38,29 @@ jobs:
       - run: npm ci
       - run: npm run lint
 
+  dependency-scan:
+    name: Dependency scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      # SRS §7 / SEC-001 §4: "Automated vulnerability scanning on every
+      # build; critical/high CVEs block deployment." Non-blocking for now
+      # (continue-on-error) rather than gating Build - apps/web currently
+      # carries known high/critical CVEs in its pinned Next.js 14.2.35 with
+      # no fix available short of a breaking major-version upgrade (Next
+      # 16), tracked as a pending decision in the Decision Log rather than
+      # forced through as part of unrelated hardening work. Once that's
+      # resolved, flip this to blocking (remove continue-on-error, add to
+      # the Build job's `needs`).
+      - name: npm audit (report only)
+        continue-on-error: true
+        run: npm audit --audit-level=high
+
   typecheck:
     name: Typecheck
     runs-on: ubuntu-latest
