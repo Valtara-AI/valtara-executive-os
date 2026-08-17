@@ -17,6 +17,7 @@
     "@vex-os/ai-orchestrator": "*",
     "@vex-os/audit": "*",
     "@vex-os/database": "*",
+    "@vex-os/integrations": "*",
     "@vex-os/shared": "*",
     "bullmq": "^5.34.5",
     "drizzle-orm": "^0.38.2",

@@ -1,12 +1,13 @@
 // Requires a live Postgres. Uses MockProvider so this is deterministic.
 
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { eq } from "drizzle-orm";
 import { getDb, schema } from "@vex-os/database";
 import { MockProvider } from "@vex-os/ai-orchestrator";
+import { saveTokens } from "@vex-os/integrations";
 import { ExecutiveNotFoundError, generateBrief, localDateString } from "./generate-brief.js";
 
-const hasDb = Boolean(process.env.DATABASE_URL);
+const hasDb = Boolean(process.env.DATABASE_URL) && Boolean(process.env.DB_ENCRYPTION_KEY);
 
 describe("localDateString", () => {
   it("formats as YYYY-MM-DD for a given timezone", () => {
@@ -115,4 +116,90 @@ describe.skipIf(!hasDb)("generateBrief", () => {
       generateBrief("00000000-0000-0000-0000-000000000000", new MockProvider()),
     ).rejects.toThrow(ExecutiveNotFoundError);
   });
+
+  it("includes real calendar and email context when Google is connected", async () => {
+    const executive = await makeExecutive();
+    await saveTokens(executive.id, "google", {
+      accessToken: "at",
+      refreshToken: "rt",
+      scopes: [],
+      expiresAt: new Date(Date.now() + 3600_000), // far future - no refresh call needed
+    });
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockImplementation((url: string) => {
+        if (url.includes("calendar/v3")) {
+          return Promise.resolve({
+            ok: true,
+            json: () =>
+              Promise.resolve({
+                items: [
+                  { id: "e1", summary: "Board sync", start: { dateTime: "2026-03-15T14:00:00Z" } },
+                ],
+              }),
+          });
+        }
+        if (url.includes("gmail/v1")) {
+          return Promise.resolve({
+            ok: true,
+            json: () =>
+              Promise.resolve({
+                threads: [{ id: "t1", snippet: "Q3 numbers attached", historyId: "1" }],
+              }),
+          });
+        }
+        throw new Error(`Unexpected fetch to ${url}`);
+      }),
+    );
+
+    const provider = new MockProvider();
+    provider.enqueue("Brief with calendar and email.");
+
+    try {
+      const brief = await generateBrief(executive.id, provider);
+      expect(brief.content).toBe("Brief with calendar and email.");
+      expect((brief.sectionsJson as { googleConnected: boolean }).googleConnected).toBe(true);
+      expect((brief.sectionsJson as { calendarEventCount: number }).calendarEventCount).toBe(1);
+      expect((brief.sectionsJson as { unreadEmailCount: number }).unreadEmailCount).toBe(1);
+
+      expect(provider.calls[0]?.systemPrompt).toContain("Board sync");
+      expect(provider.calls[0]?.systemPrompt).toContain("Q3 numbers attached");
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it("degrades gracefully (empty sections, brief still generates) when a Google API call fails", async () => {
+    const executive = await makeExecutive();
+    await saveTokens(executive.id, "google", {
+      accessToken: "at",
+      refreshToken: "rt",
+      scopes: [],
+      expiresAt: new Date(Date.now() + 3600_000),
+    });
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValue({
+          ok: false,
+          status: 500,
+          headers: new Headers(),
+          text: () => Promise.resolve(""),
+        }),
+    );
+
+    const provider = new MockProvider();
+    provider.enqueue("Brief without calendar/email due to fetch failure.");
+
+    try {
+      const brief = await generateBrief(executive.id, provider);
+      expect(brief.content).toBe("Brief without calendar/email due to fetch failure.");
+      expect((brief.sectionsJson as { googleConnected: boolean }).googleConnected).toBe(true);
+      expect((brief.sectionsJson as { calendarEventCount: number }).calendarEventCount).toBe(0);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  }, 10000);
 });

@@ -1,7 +1,7 @@
 // MB-01/MB-02: composes and persists one executive's morning brief. See
-// prompts/morning-brief/system.v1.hbs for which sections are actually
-// implemented (HITL queue + task activity + known time drains) versus
-// deferred (calendar, email - no integrations exist until Sprint 4+).
+// prompts/morning-brief/system.v1.hbs for which sections are implemented.
+// Calendar/email were deferred in Sprint 3 (no integration existed to
+// source them from honestly); now real when Google is connected.
 
 import { and, desc, eq, gte, inArray } from "drizzle-orm";
 import { getDb, schema } from "@vex-os/database";
@@ -11,6 +11,7 @@ import {
   type InferenceProvider,
 } from "@vex-os/ai-orchestrator";
 import { logTaskEvent } from "@vex-os/audit";
+import { GoogleCalendarAdapter, GoogleMailAdapter, isGoogleConnected } from "@vex-os/integrations";
 
 export class ExecutiveNotFoundError extends Error {
   constructor(executiveId: string) {
@@ -27,6 +28,46 @@ export function localDateString(timezone: string, at: Date = new Date()): string
 function summarizeTask(task: { status: string; prompt: string }, agentName: string): string {
   const truncatedPrompt = task.prompt.length > 80 ? `${task.prompt.slice(0, 80)}…` : task.prompt;
   return `${agentName} (${task.status}): ${truncatedPrompt}`;
+}
+
+interface GoogleContext {
+  connected: boolean;
+  calendarEvents: string[];
+  emailDigest: string[];
+}
+
+const calendarAdapter = new GoogleCalendarAdapter();
+const mailAdapter = new GoogleMailAdapter();
+
+// MB-04: "freshness ≤ 30 minutes" is satisfied by construction here - this
+// runs at generation time, not from a cache. A fetch failure (expired
+// token needing re-auth, a transient Google outage) degrades to an empty
+// section rather than failing the whole brief - the executive still gets
+// HITL/task status even if calendar/email couldn't be reached right now.
+async function gatherGoogleContext(executiveId: string): Promise<GoogleContext> {
+  const connected = await isGoogleConnected(executiveId);
+  if (!connected) return { connected: false, calendarEvents: [], emailDigest: [] };
+
+  const now = new Date();
+  const twoDaysOut = new Date(now.getTime() + 48 * 60 * 60 * 1000);
+
+  const [calendarEvents, emailDigest] = await Promise.all([
+    calendarAdapter
+      .listEvents(executiveId, now, twoDaysOut)
+      .then((events) =>
+        events.map((e) => {
+          const when = e.start?.dateTime ?? e.start?.date ?? "unknown time";
+          return `${e.summary ?? "(no title)"} — ${when}`;
+        }),
+      )
+      .catch(() => []),
+    mailAdapter
+      .listThreads(executiveId, "is:unread", 5)
+      .then((threads) => threads.map((t) => t.snippet))
+      .catch(() => []),
+  ]);
+
+  return { connected: true, calendarEvents, emailDigest };
 }
 
 /**
@@ -87,6 +128,8 @@ export async function generateBrief(
     .orderBy(desc(schema.executiveIntelligenceProfiles.version))
     .limit(1);
 
+  const googleContext = await gatherGoogleContext(executiveId);
+
   const systemPrompt = await renderPrompt("morning-brief/system.v1.hbs", {
     executiveName: executive.name,
     date: today,
@@ -96,6 +139,9 @@ export async function generateBrief(
       summarizeTask(t, agentNameById.get(t.agentId) ?? "Unknown agent"),
     ),
     timeDrains: latestProfile?.timeDrains ?? [],
+    googleConnected: googleContext.connected,
+    calendarEvents: googleContext.calendarEvents,
+    emailDigest: googleContext.emailDigest,
   });
 
   const result = await provider.complete({
@@ -108,6 +154,9 @@ export async function generateBrief(
     hitlQueueCount: pendingHitlItems.length,
     taskActivityCount: recentTasks.length,
     timeDrains: latestProfile?.timeDrains ?? [],
+    googleConnected: googleContext.connected,
+    calendarEventCount: googleContext.calendarEvents.length,
+    unreadEmailCount: googleContext.emailDigest.length,
   };
 
   const [brief] = await db
