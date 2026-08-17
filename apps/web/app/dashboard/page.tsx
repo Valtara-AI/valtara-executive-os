@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { HitlQueueItem, Task } from "@vex-os/shared";
@@ -15,14 +16,48 @@ import {
   rejectHitlItem,
 } from "@/lib/dashboard-api";
 import { acceptInvitation, declineInvitation, listPendingInvitations } from "@/lib/delegate-api";
+import {
+  disconnectIntegration,
+  getAuthorizationUrl,
+  listIntegrations,
+} from "@/lib/integrations-api";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ThemeToggle } from "@/components/theme-toggle";
 
+const PROVIDER_LABEL: Record<string, string> = { google: "Google (Gmail + Calendar)" };
+
+// useSearchParams (for ?integration=connected|error from the OAuth
+// callback redirect) requires a Suspense boundary in the App Router, or
+// the whole route fails static/server rendering - the actual content
+// lives in DashboardContent below.
 export default function DashboardPage() {
+  return (
+    <React.Suspense fallback={null}>
+      <DashboardContent />
+    </React.Suspense>
+  );
+}
+
+function DashboardContent() {
   const { data: session } = useSession();
   const accessToken = session?.accessToken;
   const queryClient = useQueryClient();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Feedback from routes/integrations.ts's callback redirect
+  // (?integration=connected|error). Captured into state once on mount
+  // (not read directly from searchParams on every render) so it survives
+  // the router.replace() below that strips the query param - otherwise a
+  // refresh-triggered re-render would immediately null it back out before
+  // the executive has a chance to see it.
+  const [integrationFeedback] = React.useState(() => searchParams.get("integration"));
+  React.useEffect(() => {
+    if (!integrationFeedback) return;
+    router.replace("/dashboard");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const summaryQuery = useQuery({
     queryKey: ["dashboard-summary"],
@@ -76,6 +111,24 @@ export default function DashboardPage() {
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["pending-invitations"] }),
   });
 
+  const integrationsQuery = useQuery({
+    queryKey: ["integrations"],
+    queryFn: () => listIntegrations(accessToken!),
+    enabled: Boolean(accessToken),
+  });
+  const connectMutation = useMutation({
+    mutationFn: async (provider: string) => {
+      const { url } = await getAuthorizationUrl(accessToken!, provider);
+      // A full top-level navigation, not a fetch: the executive has to
+      // actually see and act on Google's consent screen.
+      window.location.href = url;
+    },
+  });
+  const disconnectMutation = useMutation({
+    mutationFn: (provider: string) => disconnectIntegration(accessToken!, provider),
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["integrations"] }),
+  });
+
   const agentNameById = React.useMemo(
     () => new Map((agentsQuery.data ?? []).map((a) => [a.id, a.name])),
     [agentsQuery.data],
@@ -113,6 +166,17 @@ export default function DashboardPage() {
           </Button>
         </div>
       </header>
+
+      {integrationFeedback === "connected" && (
+        <div className="rounded-md border border-border bg-muted px-4 py-2 text-sm">
+          Integration connected.
+        </div>
+      )}
+      {integrationFeedback === "error" && (
+        <div className="rounded-md border border-border bg-muted px-4 py-2 text-sm">
+          Something went wrong connecting that integration. Please try again.
+        </div>
+      )}
 
       {invitationsQuery.data && invitationsQuery.data.length > 0 && (
         <Card>
@@ -153,7 +217,10 @@ export default function DashboardPage() {
         <StatTile label="HITL queue" value={summaryQuery.data?.hitlQueueCount} />
         <StatTile label="Active tasks" value={summaryQuery.data?.activeTaskCount} />
         <StatTile label="Pending decisions" value={summaryQuery.data?.pendingDecisionCount} />
-        <StatTile label="Integrations" value={summaryQuery.data?.integrations.length ?? 0} />
+        <StatTile
+          label="Integrations"
+          value={integrationsQuery.data?.filter((i) => i.connected).length}
+        />
       </section>
 
       <Card>
@@ -204,6 +271,38 @@ export default function DashboardPage() {
             />
           ))}
         </ul>
+      </Card>
+
+      <Card>
+        <h2 className="mb-4 text-lg font-medium">Integrations</h2>
+        <div className="flex flex-col gap-2">
+          {integrationsQuery.data?.map((integration) => (
+            <div
+              key={integration.provider}
+              className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm"
+            >
+              <span>{PROVIDER_LABEL[integration.provider] ?? integration.provider}</span>
+              {integration.connected ? (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={disconnectMutation.isPending}
+                  onClick={() => disconnectMutation.mutate(integration.provider)}
+                >
+                  Disconnect
+                </Button>
+              ) : (
+                <Button
+                  size="sm"
+                  disabled={connectMutation.isPending}
+                  onClick={() => connectMutation.mutate(integration.provider)}
+                >
+                  Connect
+                </Button>
+              )}
+            </div>
+          ))}
+        </div>
       </Card>
     </main>
   );
