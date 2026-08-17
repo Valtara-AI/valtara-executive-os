@@ -16,7 +16,7 @@ import type {
 import { googleApiFetch } from "./authenticated-fetch.js";
 import {
   disconnectGoogle,
-  getGoogleAuthorizationUrl,
+  getGoogleAuthorizationUrlLegacy,
   isGoogleConnected,
 } from "./google-connection.js";
 import { exchangeCodeForTokens } from "./oauth.js";
@@ -51,7 +51,7 @@ export class GoogleMailAdapter implements IntegrationAdapter {
   }
 
   getAuthorizationUrl(state: string): AuthorizationRequest {
-    return getGoogleAuthorizationUrl(state);
+    return getGoogleAuthorizationUrlLegacy(state);
   }
 
   // Pure exchange only - matches IntegrationAdapter's contract (no

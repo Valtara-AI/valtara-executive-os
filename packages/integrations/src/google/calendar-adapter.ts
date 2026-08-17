@@ -11,7 +11,7 @@ import type {
 import { googleApiFetch } from "./authenticated-fetch.js";
 import {
   disconnectGoogle,
-  getGoogleAuthorizationUrl,
+  getGoogleAuthorizationUrlLegacy,
   isGoogleConnected,
 } from "./google-connection.js";
 import { exchangeCodeForTokens } from "./oauth.js";
@@ -38,7 +38,7 @@ export class GoogleCalendarAdapter implements IntegrationAdapter {
   }
 
   getAuthorizationUrl(state: string): AuthorizationRequest {
-    return getGoogleAuthorizationUrl(state);
+    return getGoogleAuthorizationUrlLegacy(state);
   }
 
   exchangeCodeForTokens(code: string, codeVerifier: string): Promise<OAuthTokenSet> {

@@ -11,7 +11,8 @@ export {
 export {
   isGoogleConnected,
   disconnectGoogle,
-  getGoogleAuthorizationUrl,
+  beginGoogleAuthorization,
+  buildGoogleAuthorizationUrl,
   completeGoogleConnection,
 } from "./google/google-connection.js";
 export { InsufficientScopeError } from "./google/authenticated-fetch.js";

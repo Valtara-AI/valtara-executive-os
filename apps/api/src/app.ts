@@ -14,6 +14,7 @@ import { internalRoute } from "./routes/internal.js";
 import { briefsRoute } from "./routes/briefs.js";
 import { dashboardRoute } from "./routes/dashboard.js";
 import { executiveProfileRoute } from "./routes/executive-profile.js";
+import { integrationsRoute, integrationsCallbackRoute } from "./routes/integrations.js";
 
 // API-001 §2.1: base URL /api/v1/, all endpoints require authentication
 // except /auth/* (and, by the same rationale, /health).
@@ -58,6 +59,14 @@ export function createApp() {
   // Called by apps/web's NextAuth server-side, never by a browser.
   v1.use("/internal/*", internalSecretMiddleware);
   v1.route("/internal", internalRoute);
+
+  // No blanket jwtMiddleware here (unlike every group above) - the two
+  // routers mounted below carry their own auth internally, deliberately
+  // different per route: integrationsRoute requires a Bearer token,
+  // integrationsCallbackRoute (the OAuth redirect target) can't have one -
+  // see routes/integrations.ts's file header.
+  v1.route("/integrations", integrationsCallbackRoute);
+  v1.route("/integrations", integrationsRoute);
 
   app.route("/api/v1", v1);
 

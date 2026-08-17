@@ -3,7 +3,7 @@
 
 import { deleteTokens, getTokens, saveTokens } from "../token-store.js";
 import {
-  buildGoogleAuthorizationUrl,
+  buildGoogleAuthorizationUrl as buildGoogleOAuthAuthorizationUrl,
   exchangeCodeForTokens,
   generatePkcePair,
   revokeToken,
@@ -15,10 +15,33 @@ export async function isGoogleConnected(executiveId: string): Promise<boolean> {
   return Boolean(await getTokens(executiveId, GOOGLE_PROVIDER));
 }
 
-export function getGoogleAuthorizationUrl(state: string): AuthorizationRequest {
+// Split into two steps (not one getAuthorizationUrl(state) call) because
+// PKCE has a real data dependency the single-call shape can't express
+// cleanly: the caller (routes/integrations.ts) needs codeVerifier *before*
+// it can sign a state token to embed it in, but codeChallenge (needed to
+// build the URL) is derived from that same codeVerifier. So: generate the
+// pair first, let the caller build state from codeVerifier, then build the
+// URL from codeChallenge + that state.
+export function beginGoogleAuthorization(): { codeVerifier: string; codeChallenge: string } {
+  return generatePkcePair();
+}
+
+export function buildGoogleAuthorizationUrl(codeChallenge: string, state: string): string {
+  return buildGoogleOAuthAuthorizationUrl(ALL_GOOGLE_SCOPES, state, codeChallenge);
+}
+
+// IntegrationAdapter's generic getAuthorizationUrl(state): AuthorizationRequest
+// contract (types.ts) assumes state is known upfront, which doesn't hold
+// for PKCE - kept here only so GoogleMailAdapter/GoogleCalendarAdapter can
+// still satisfy that interface for callers that don't care about PKCE
+// correctness (none do today; routes/integrations.ts uses the two-step
+// functions above instead). Marked legacy rather than removed since the
+// interface itself may need revisiting once Outlook/Slack adapters (which
+// don't use PKCE) show whether the shape actually fits them either.
+export function getGoogleAuthorizationUrlLegacy(state: string): AuthorizationRequest {
   const { codeVerifier, codeChallenge } = generatePkcePair();
   return {
-    url: buildGoogleAuthorizationUrl(ALL_GOOGLE_SCOPES, state, codeChallenge),
+    url: buildGoogleOAuthAuthorizationUrl(ALL_GOOGLE_SCOPES, state, codeChallenge),
     codeVerifier,
   };
 }
