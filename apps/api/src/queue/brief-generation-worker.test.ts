@@ -49,6 +49,15 @@ describe.skipIf(!hasDb || !hasRedis)("brief generation worker (end-to-end)", () 
 
     const provider = new MockProvider();
     provider.enqueue("Your worker-generated brief.");
+
+    // Defensive: a stray waiting job from anywhere else (a manually-run
+    // worker process during local testing, another suite that didn't
+    // clean up) would get consumed by this test's worker before its own
+    // job and silently eat the one queued MockProvider response, producing
+    // a flaky "content is the default '{}' response" failure that has
+    // nothing to do with this test's own logic. Draining first makes the
+    // queue's state actually match what the test assumes.
+    await getBriefGenerationQueue().drain();
     const worker = createBriefGenerationWorker(provider);
 
     try {

@@ -2,11 +2,14 @@
   "name": "@vex-os/integrations",
   "version": "0.1.0",
   "private": true,
-  "description": "Email, calendar, and Slack integration adapters (empty in Sprint 1 — see README.md)",
+  "description": "Email, calendar, and Slack integration adapters (Gmail + Calendar landed Sprint 4 — see README.md)",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
     "typecheck": "tsc --build"
+  },
+  "dependencies": {
+    "@vex-os/database": "*"
   }
 }

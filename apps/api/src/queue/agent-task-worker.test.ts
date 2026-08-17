@@ -65,6 +65,12 @@ describe.skipIf(!hasDb || !hasRedis)("agent task worker (end-to-end)", () => {
 
     const provider = new MockProvider();
     provider.enqueue("Worker-produced output.");
+
+    // Defensive: see brief-generation-worker.test.ts's identical comment -
+    // a stray waiting job from anywhere else consuming this test's one
+    // queued MockProvider response would produce a flaky failure unrelated
+    // to this test's own logic.
+    await getAgentTaskQueue().drain();
     const worker = createAgentTaskWorker(provider);
 
     try {

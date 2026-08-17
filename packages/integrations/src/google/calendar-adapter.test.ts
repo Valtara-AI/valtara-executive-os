@@ -1,0 +1,144 @@
+// Requires a live Postgres + DB_ENCRYPTION_KEY. Same pattern as
+// gmail-adapter.test.ts - see that file's header for why the HITL gate is
+// tested against the real trigger rather than mocked.
+
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { eq } from "drizzle-orm";
+import { getDb, schema } from "@vex-os/database";
+import { saveTokens } from "../token-store.js";
+import { GoogleCalendarAdapter } from "./calendar-adapter.js";
+
+const hasDb = Boolean(process.env.DATABASE_URL) && Boolean(process.env.DB_ENCRYPTION_KEY);
+
+describe.skipIf(!hasDb)("GoogleCalendarAdapter", () => {
+  const adapter = new GoogleCalendarAdapter();
+  const cleanupExecutiveIds: string[] = [];
+
+  afterEach(async () => {
+    const db = getDb();
+    for (const id of cleanupExecutiveIds.splice(0)) {
+      // external_actions.agent_id is ON DELETE RESTRICT, not CASCADE - see
+      // gmail-adapter.test.ts's afterEach for the full explanation.
+      const agentRows = await db
+        .select({ id: schema.agents.id })
+        .from(schema.agents)
+        .where(eq(schema.agents.executiveId, id));
+      for (const agent of agentRows) {
+        await db.delete(schema.externalActions).where(eq(schema.externalActions.agentId, agent.id));
+      }
+      await db.delete(schema.executives).where(eq(schema.executives.id, id));
+    }
+    vi.restoreAllMocks();
+  });
+
+  async function makeConnectedExecutiveWithAgent() {
+    const db = getDb();
+    const [executive] = await db
+      .insert(schema.executives)
+      .values({
+        name: "Cal Test Exec",
+        email: `cal-test-${Date.now()}-${Math.random()}@example.com`,
+      })
+      .returning();
+    cleanupExecutiveIds.push(executive!.id);
+    await saveTokens(executive!.id, "google", {
+      accessToken: "at",
+      refreshToken: "rt",
+      scopes: [],
+      expiresAt: new Date(Date.now() + 3600_000),
+    });
+    const [agent] = await db
+      .insert(schema.agents)
+      .values({
+        executiveId: executive!.id,
+        name: "Cal Agent",
+        description: "d",
+        responsibilities: ["r"],
+      })
+      .returning();
+    return { executive: executive!, agent: agent! };
+  }
+
+  it("listEvents parses the items array and sends the correct time range", async () => {
+    const { executive } = await makeConnectedExecutiveWithAgent();
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ items: [{ id: "e1", summary: "Standup" }] }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const timeMin = new Date("2026-03-15T00:00:00Z");
+    const timeMax = new Date("2026-03-16T00:00:00Z");
+    const events = await adapter.listEvents(executive.id, timeMin, timeMax);
+
+    expect(events).toEqual([{ id: "e1", summary: "Standup" }]);
+    const calledUrl = new URL(fetchMock.mock.calls[0]![0] as string);
+    expect(calledUrl.searchParams.get("timeMin")).toBe(timeMin.toISOString());
+    expect(calledUrl.searchParams.get("timeMax")).toBe(timeMax.toISOString());
+  });
+
+  it("createEvent rejects when the HITL item is only pending, and never calls the Calendar API", async () => {
+    const { executive, agent } = await makeConnectedExecutiveWithAgent();
+    const db = getDb();
+    const [pendingItem] = await db
+      .insert(schema.hitlQueueItems)
+      .values({
+        executiveId: executive.id,
+        status: "pending",
+        originalOutput: "Schedule a meeting",
+      })
+      .returning();
+
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      adapter.createEvent(
+        executive.id,
+        { agentId: agent.id, hitlQueueItemId: pendingItem!.id },
+        { summary: "Meeting", start: "2026-03-15T10:00:00Z", end: "2026-03-15T10:30:00Z" },
+      ),
+    ).rejects.toThrow(/not approved/i);
+
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("createEvent succeeds once approved, and records the external_action", async () => {
+    const { executive, agent } = await makeConnectedExecutiveWithAgent();
+    const db = getDb();
+    const [approvedItem] = await db
+      .insert(schema.hitlQueueItems)
+      .values({
+        executiveId: executive.id,
+        status: "approved",
+        originalOutput: "Schedule a meeting",
+        finalOutput: "Schedule a meeting",
+        actionedAt: new Date(),
+        actionedBy: executive.id,
+      })
+      .returning();
+
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValue({
+          ok: true,
+          json: () => Promise.resolve({ id: "event-1", summary: "Meeting" }),
+        }),
+    );
+
+    const event = await adapter.createEvent(
+      executive.id,
+      { agentId: agent.id, hitlQueueItemId: approvedItem!.id },
+      { summary: "Meeting", start: "2026-03-15T10:00:00Z", end: "2026-03-15T10:30:00Z" },
+    );
+    expect(event.id).toBe("event-1");
+
+    const [action] = await db
+      .select()
+      .from(schema.externalActions)
+      .where(eq(schema.externalActions.hitlQueueItemId, approvedItem!.id));
+    expect(action?.actionType).toBe("create_calendar_event");
+  });
+});
