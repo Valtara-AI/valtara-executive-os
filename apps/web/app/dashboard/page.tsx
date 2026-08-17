@@ -28,6 +28,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 const PROVIDER_LABEL: Record<string, string> = {
   google: "Google (Gmail + Calendar)",
   microsoft: "Microsoft (Outlook Mail + Calendar)",
+  slack: "Slack",
 };
 
 // useSearchParams (for ?integration=connected|error from the OAuth
