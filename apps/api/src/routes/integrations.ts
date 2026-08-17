@@ -17,6 +17,11 @@ import {
   completeMicrosoftConnection,
   disconnectMicrosoft,
   isMicrosoftConnected,
+  beginSlackAuthorization,
+  buildSlackAuthorizationUrl,
+  completeSlackConnection,
+  disconnectSlack,
+  isSlackConnected,
 } from "@vex-os/integrations";
 import { fail, ok } from "@vex-os/shared";
 import type { AuthedVariables } from "../middleware/jwt.js";
@@ -26,9 +31,8 @@ import { resolveExecutive } from "../domains/onboarding/resolve-executive.js";
 import { signOAuthState, verifyOAuthState } from "../domains/integrations/oauth-state.js";
 import { logTaskEvent } from "@vex-os/audit";
 
-// Google landed Sprint 4, Microsoft (Outlook) Sprint 5. Slack (Sprint 6)
-// adds an entry here, not a new route file, once it lands.
-const SUPPORTED_PROVIDERS = ["google", "microsoft"] as const;
+// Google Sprint 4, Microsoft (Outlook) Sprint 5, Slack Sprint 6.
+const SUPPORTED_PROVIDERS = ["google", "microsoft", "slack"] as const;
 type SupportedProvider = (typeof SUPPORTED_PROVIDERS)[number];
 
 function isSupportedProvider(value: string): value is SupportedProvider {
@@ -47,15 +51,21 @@ export const integrationsRoute = new Hono<{ Variables: AuthedVariables }>();
 integrationsRoute.use("*", jwtMiddleware);
 integrationsRoute.use("*", requireRole("Executive"));
 
+async function isProviderConnected(
+  provider: SupportedProvider,
+  executiveId: string,
+): Promise<boolean> {
+  if (provider === "google") return isGoogleConnected(executiveId);
+  if (provider === "microsoft") return isMicrosoftConnected(executiveId);
+  return isSlackConnected(executiveId);
+}
+
 integrationsRoute.get("/", async (c) => {
   const executive = await resolveExecutive(c.get("user"));
   const statuses = await Promise.all(
     SUPPORTED_PROVIDERS.map(async (provider) => ({
       provider,
-      connected:
-        provider === "google"
-          ? await isGoogleConnected(executive.id)
-          : await isMicrosoftConnected(executive.id),
+      connected: await isProviderConnected(provider, executive.id),
     })),
   );
   return c.json(ok(statuses));
@@ -71,11 +81,11 @@ integrationsRoute.get("/:provider/authorize", async (c) => {
   }
   const executive = await resolveExecutive(c.get("user"));
 
-  // PKCE's real data dependency (same for both providers): codeVerifier
-  // must exist before state (which embeds it) can be signed, and
-  // codeChallenge (needed for the URL) is derived from that same
-  // codeVerifier - so generate the pair first, sign state from it, then
-  // build the URL from state + challenge.
+  // PKCE's real data dependency (Google/Microsoft only - Slack has none,
+  // see below): codeVerifier must exist before state (which embeds it) can
+  // be signed, and codeChallenge (needed for the URL) is derived from that
+  // same codeVerifier - so generate the pair first, sign state from it,
+  // then build the URL from state + challenge.
   if (provider === "google") {
     const { codeVerifier, codeChallenge } = beginGoogleAuthorization();
     const state = await signOAuthState({ executiveId: executive.id, provider, codeVerifier });
@@ -90,7 +100,13 @@ integrationsRoute.get("/:provider/authorize", async (c) => {
     return c.json(ok({ url }));
   }
 
-  return c.json(fail("UNSUPPORTED_PROVIDER", `"${provider}" is not a supported integration.`), 400);
+  // Slack has no PKCE (oauth.ts's header) - codeVerifier is always "" here,
+  // carried through the state token purely so signOAuthState's shared
+  // payload shape doesn't need a Slack-specific exception.
+  const { codeVerifier } = beginSlackAuthorization();
+  const state = await signOAuthState({ executiveId: executive.id, provider, codeVerifier });
+  const url = buildSlackAuthorizationUrl(state);
+  return c.json(ok({ url }));
 });
 
 integrationsRoute.delete("/:provider", async (c) => {
@@ -107,6 +123,8 @@ integrationsRoute.delete("/:provider", async (c) => {
     await disconnectGoogle(executive.id);
   } else if (provider === "microsoft") {
     await disconnectMicrosoft(executive.id);
+  } else {
+    await disconnectSlack(executive.id);
   }
 
   await logTaskEvent({
@@ -145,6 +163,8 @@ integrationsCallbackRoute.get("/:provider/callback", async (c) => {
       await completeGoogleConnection(statePayload.executiveId, code, statePayload.codeVerifier);
     } else if (provider === "microsoft") {
       await completeMicrosoftConnection(statePayload.executiveId, code, statePayload.codeVerifier);
+    } else if (provider === "slack") {
+      await completeSlackConnection(statePayload.executiveId, code);
     } else {
       throw new Error(`"${provider}" is not a supported integration.`);
     }

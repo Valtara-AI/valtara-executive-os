@@ -89,11 +89,12 @@ jobs:
       REDIS_URL: redis://localhost:6379
       # Not real secrets - a throwaway AES key for a throwaway CI database,
       # and dummy OAuth client values that only need to be non-empty
-      # (every test mocks the actual Google/Microsoft HTTP calls). Without
-      # these, every test gated on DB_ENCRYPTION_KEY/*_CLIENT_ID silently
-      # *skips* rather than runs - which is what was happening here through
-      # all of Sprint 4 (34 tests skipped, unnoticed, because CI reports
-      # green either way). Discovered and fixed alongside Sprint 5.
+      # (every test mocks the actual Google/Microsoft/Slack HTTP calls).
+      # Without these, every test gated on DB_ENCRYPTION_KEY/*_CLIENT_ID
+      # silently *skips* rather than runs - which is what was happening
+      # here through all of Sprint 4 (34 tests skipped, unnoticed, because
+      # CI reports green either way). Discovered and fixed alongside
+      # Sprint 5.
       DB_ENCRYPTION_KEY: "Cb1aYTc+N+JpEqVvfKFpN3G4gSDA5xsALOKoXr1l42Y="
       GOOGLE_CLIENT_ID: ci-test-google-client-id
       GOOGLE_CLIENT_SECRET: ci-test-google-client-secret
@@ -101,6 +102,9 @@ jobs:
       MICROSOFT_CLIENT_ID: ci-test-microsoft-client-id
       MICROSOFT_CLIENT_SECRET: ci-test-microsoft-client-secret
       MICROSOFT_REDIRECT_URI: http://localhost:3001/api/v1/integrations/microsoft/callback
+      SLACK_CLIENT_ID: ci-test-slack-client-id
+      SLACK_CLIENT_SECRET: ci-test-slack-client-secret
+      SLACK_REDIRECT_URI: http://localhost:3001/api/v1/integrations/slack/callback
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

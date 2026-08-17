@@ -1,6 +1,6 @@
 // DB-gated (needs DB_ENCRYPTION_KEY too, for token-store). Mocks the
 // global fetch for the provider's token endpoint so the full authorize ->
-// callback round trip is testable without real Google/Microsoft
+// callback round trip is testable without real Google/Microsoft/Slack
 // credentials - see packages/integrations' README for why that's the only
 // piece that can't be exercised for real in this environment.
 
@@ -14,7 +14,8 @@ const hasDb =
   Boolean(process.env.DATABASE_URL) &&
   Boolean(process.env.DB_ENCRYPTION_KEY) &&
   Boolean(process.env.GOOGLE_CLIENT_ID) &&
-  Boolean(process.env.MICROSOFT_CLIENT_ID);
+  Boolean(process.env.MICROSOFT_CLIENT_ID) &&
+  Boolean(process.env.SLACK_CLIENT_ID);
 
 interface ApiEnvelope<T = Record<string, unknown>> {
   success: boolean;
@@ -56,7 +57,7 @@ describe.skipIf(!hasDb)("integrations routes", () => {
     return email;
   }
 
-  it("GET / lists google and microsoft as not connected before any connection exists", async () => {
+  it("GET / lists google, microsoft, and slack as not connected before any connection exists", async () => {
     const app = createApp();
     const token = await signToken({ email: freshEmail("list"), role: "Executive" });
 
@@ -68,6 +69,7 @@ describe.skipIf(!hasDb)("integrations routes", () => {
     expect(body.data).toEqual([
       { provider: "google", connected: false },
       { provider: "microsoft", connected: false },
+      { provider: "slack", connected: false },
     ]);
   });
 
@@ -103,11 +105,26 @@ describe.skipIf(!hasDb)("integrations routes", () => {
     expect(url.searchParams.get("state")).toBeTruthy();
   });
 
+  it("GET /:provider/authorize returns a Slack consent URL with state, no PKCE params", async () => {
+    const app = createApp();
+    const token = await signToken({ email: freshEmail("slack-authorize"), role: "Executive" });
+
+    const res = await app.request("/api/v1/integrations/slack/authorize", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(res.status).toBe(200);
+    const body = await jsonBody<{ url: string }>(res);
+    const url = new URL(body.data!.url);
+    expect(url.origin + url.pathname).toBe("https://slack.com/oauth/v2/authorize");
+    expect(url.searchParams.get("state")).toBeTruthy();
+    expect(url.searchParams.get("code_challenge")).toBeNull();
+  });
+
   it("returns 400 for an unsupported provider", async () => {
     const app = createApp();
     const token = await signToken({ email: freshEmail("unsupported"), role: "Executive" });
 
-    const res = await app.request("/api/v1/integrations/slack/authorize", {
+    const res = await app.request("/api/v1/integrations/notion/authorize", {
       headers: { Authorization: `Bearer ${token}` },
     });
     expect(res.status).toBe(400);
@@ -161,6 +178,7 @@ describe.skipIf(!hasDb)("integrations routes", () => {
     expect(listBody.data).toEqual([
       { provider: "google", connected: true },
       { provider: "microsoft", connected: false },
+      { provider: "slack", connected: false },
     ]);
 
     const disconnectRes = await app.request("/api/v1/integrations/google", {
@@ -218,6 +236,7 @@ describe.skipIf(!hasDb)("integrations routes", () => {
     expect(listBody.data).toEqual([
       { provider: "google", connected: false },
       { provider: "microsoft", connected: true },
+      { provider: "slack", connected: false },
     ]);
 
     const disconnectRes = await app.request("/api/v1/integrations/microsoft", {
@@ -226,6 +245,63 @@ describe.skipIf(!hasDb)("integrations routes", () => {
     });
     expect(disconnectRes.status).toBe(200);
     expect(await getTokens(executive!.id, "microsoft")).toBeUndefined();
+  });
+
+  it("full round trip for Slack: authorize -> callback connects, list reflects it, disconnect removes it", async () => {
+    const app = createApp();
+    const email = freshEmail("slack-roundtrip");
+    const token = await signToken({ email, role: "Executive" });
+    const headers = { Authorization: `Bearer ${token}` };
+
+    const authorizeRes = await app.request("/api/v1/integrations/slack/authorize", { headers });
+    const { url } = (await jsonBody<{ url: string }>(authorizeRes)).data!;
+    const state = new URL(url).searchParams.get("state")!;
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            ok: true,
+            access_token: "xoxb-roundtrip",
+            scope: "channels:read,chat:write",
+            team: { id: "T123", name: "Test Team" },
+          }),
+      }),
+    );
+
+    const callbackRes = await app.request(
+      `/api/v1/integrations/slack/callback?code=fake-auth-code&state=${encodeURIComponent(state)}`,
+      { redirect: "manual" },
+    );
+    expect(callbackRes.status).toBe(302);
+    expect(callbackRes.headers.get("location")).toContain("integration=connected");
+
+    const db = getDb();
+    const [executive] = await db
+      .select()
+      .from(schema.executives)
+      .where(eq(schema.executives.email, email));
+    const tokens = await getTokens(executive!.id, "slack");
+    expect(tokens?.accessToken).toBe("xoxb-roundtrip");
+
+    vi.unstubAllGlobals();
+
+    const listRes = await app.request("/api/v1/integrations", { headers });
+    const listBody = await jsonBody<{ provider: string; connected: boolean }[]>(listRes);
+    expect(listBody.data).toEqual([
+      { provider: "google", connected: false },
+      { provider: "microsoft", connected: false },
+      { provider: "slack", connected: true },
+    ]);
+
+    const disconnectRes = await app.request("/api/v1/integrations/slack", {
+      method: "DELETE",
+      headers,
+    });
+    expect(disconnectRes.status).toBe(200);
+    expect(await getTokens(executive!.id, "slack")).toBeUndefined();
   });
 
   it("callback redirects with an error and stores nothing for a tampered state token", async () => {
