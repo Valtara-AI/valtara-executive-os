@@ -5,6 +5,7 @@ import type {
   HitlStatus,
   MorningBrief,
   Task,
+  TaskOutput,
 } from "@vex-os/shared";
 import { apiFetch } from "./api-client";
 
@@ -89,6 +90,32 @@ export function assignTask(accessToken: string, agentId: string, prompt: string)
     method: "POST",
     body: JSON.stringify({ prompt }),
   });
+}
+
+export function updateAgent(
+  accessToken: string,
+  agentId: string,
+  patch: Partial<Pick<Agent, "name" | "description" | "responsibilities" | "hitlMode">>,
+): Promise<Agent> {
+  return apiFetch(`/api/v1/agents/${agentId}`, accessToken, {
+    method: "PATCH",
+    body: JSON.stringify(patch),
+  });
+}
+
+export function archiveAgent(accessToken: string, agentId: string): Promise<Agent> {
+  return apiFetch(`/api/v1/agents/${agentId}`, accessToken, { method: "DELETE" });
+}
+
+export function getTask(
+  accessToken: string,
+  taskId: string,
+): Promise<Task & { output: TaskOutput | null }> {
+  return apiFetch(`/api/v1/tasks/${taskId}`, accessToken);
+}
+
+export function cancelTask(accessToken: string, taskId: string): Promise<Task> {
+  return apiFetch(`/api/v1/tasks/${taskId}`, accessToken, { method: "DELETE" });
 }
 
 export type { HitlMode };

@@ -4,16 +4,22 @@ import * as React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { HitlQueueItem, Task } from "@vex-os/shared";
+import type { Agent, HitlMode, HitlQueueItem, Task } from "@vex-os/shared";
+import { HITL_MODES } from "@vex-os/shared";
 import {
   approveHitlItem,
+  archiveAgent,
+  assignTask,
+  cancelTask,
   editHitlItem,
   getDashboardSummary,
+  getTask,
   getTodaysBrief,
   listAgents,
   listHitlQueue,
   listTasks,
   rejectHitlItem,
+  updateAgent,
 } from "@/lib/dashboard-api";
 import { acceptInvitation, declineInvitation, listPendingInvitations } from "@/lib/delegate-api";
 import {
@@ -158,6 +164,30 @@ function DashboardContent() {
     onSuccess: invalidateHitlAndSummary,
   });
 
+  const updateAgentMutation = useMutation({
+    mutationFn: ({
+      agentId,
+      patch,
+    }: {
+      agentId: string;
+      patch: Parameters<typeof updateAgent>[2];
+    }) => updateAgent(accessToken!, agentId, patch),
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["agents"] }),
+  });
+  const archiveAgentMutation = useMutation({
+    mutationFn: (agentId: string) => archiveAgent(accessToken!, agentId),
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["agents"] }),
+  });
+  const assignTaskMutation = useMutation({
+    mutationFn: ({ agentId, prompt }: { agentId: string; prompt: string }) =>
+      assignTask(accessToken!, agentId, prompt),
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["tasks"] }),
+  });
+  const cancelTaskMutation = useMutation({
+    mutationFn: (taskId: string) => cancelTask(accessToken!, taskId),
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["tasks"] }),
+  });
+
   return (
     <main className="mx-auto flex min-h-screen max-w-4xl flex-col gap-6 p-6">
       <header className="flex items-center justify-between">
@@ -263,6 +293,29 @@ function DashboardContent() {
       </Card>
 
       <Card>
+        <h2 className="mb-4 text-lg font-medium">Agents</h2>
+        {agentsQuery.data && agentsQuery.data.length === 0 && (
+          <p className="text-sm text-muted-foreground">
+            No agents yet - they&apos;re created during onboarding.
+          </p>
+        )}
+        <div className="flex flex-col gap-3">
+          {agentsQuery.data?.map((agent) => (
+            <AgentRow
+              key={agent.id}
+              agent={agent}
+              onSave={(patch) => updateAgentMutation.mutate({ agentId: agent.id, patch })}
+              onArchive={() => archiveAgentMutation.mutate(agent.id)}
+              onAssignTask={(prompt) => assignTaskMutation.mutate({ agentId: agent.id, prompt })}
+              isSaving={updateAgentMutation.isPending}
+              isArchiving={archiveAgentMutation.isPending}
+              isAssigning={assignTaskMutation.isPending}
+            />
+          ))}
+        </div>
+      </Card>
+
+      <Card>
         <h2 className="mb-4 text-lg font-medium">Agent task activity</h2>
         {tasksQuery.data && tasksQuery.data.length === 0 && (
           <p className="text-sm text-muted-foreground">No tasks yet.</p>
@@ -273,6 +326,9 @@ function DashboardContent() {
               key={task.id}
               task={task}
               agentName={agentNameById.get(task.agentId) ?? "Agent"}
+              accessToken={accessToken}
+              onCancel={() => cancelTaskMutation.mutate(task.id)}
+              isCancelling={cancelTaskMutation.isPending}
             />
           ))}
         </ul>
@@ -400,16 +456,208 @@ const TASK_STATUS_LABEL: Record<Task["status"], string> = {
   cancelled: "Cancelled",
 };
 
-function TaskRow({ task, agentName }: { task: Task; agentName: string }) {
+const CANCELLABLE_TASK_STATUSES: Task["status"][] = ["queued", "in_progress"];
+
+function TaskRow({
+  task,
+  agentName,
+  accessToken,
+  onCancel,
+  isCancelling,
+}: {
+  task: Task;
+  agentName: string;
+  accessToken: string | undefined;
+  onCancel: () => void;
+  isCancelling: boolean;
+}) {
+  const [expanded, setExpanded] = React.useState(false);
+
+  const detailQuery = useQuery({
+    queryKey: ["task-detail", task.id],
+    queryFn: () => getTask(accessToken!, task.id),
+    enabled: expanded && Boolean(accessToken),
+  });
+
   return (
-    <li className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm">
-      <span>
-        <span className="font-medium">{agentName}</span> — {task.prompt.slice(0, 60)}
-        {task.prompt.length > 60 ? "…" : ""}
-      </span>
-      <span className="whitespace-nowrap text-xs text-muted-foreground">
-        {TASK_STATUS_LABEL[task.status]}
-      </span>
+    <li className="rounded-md border border-border text-sm">
+      <button
+        type="button"
+        className="flex w-full items-center justify-between px-3 py-2 text-left"
+        onClick={() => setExpanded((v) => !v)}
+      >
+        <span>
+          <span className="font-medium">{agentName}</span> — {task.prompt.slice(0, 60)}
+          {task.prompt.length > 60 ? "…" : ""}
+        </span>
+        <span className="whitespace-nowrap text-xs text-muted-foreground">
+          {TASK_STATUS_LABEL[task.status]}
+        </span>
+      </button>
+
+      {expanded && (
+        <div className="border-t border-border px-3 py-2">
+          <p className="text-sm">{task.prompt}</p>
+          {detailQuery.isLoading ? (
+            <p className="mt-2 text-xs text-muted-foreground">Loading output…</p>
+          ) : detailQuery.data?.output ? (
+            <p className="mt-2 whitespace-pre-wrap text-sm text-muted-foreground">
+              {detailQuery.data.output.outputText}
+            </p>
+          ) : (
+            <p className="mt-2 text-xs text-muted-foreground">No output yet.</p>
+          )}
+          {CANCELLABLE_TASK_STATUSES.includes(task.status) && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="mt-2"
+              disabled={isCancelling}
+              onClick={onCancel}
+            >
+              Cancel task
+            </Button>
+          )}
+        </div>
+      )}
     </li>
+  );
+}
+
+const HITL_MODE_LABEL: Record<HitlMode, string> = {
+  auto_draft_review: "Auto-draft, review before send",
+  checkpoint: "Pause at checkpoints",
+  autonomous_report: "Autonomous, report after",
+};
+
+function AgentRow({
+  agent,
+  onSave,
+  onArchive,
+  onAssignTask,
+  isSaving,
+  isArchiving,
+  isAssigning,
+}: {
+  agent: Agent;
+  onSave: (patch: {
+    description?: string;
+    responsibilities?: string[];
+    hitlMode?: HitlMode;
+  }) => void;
+  onArchive: () => void;
+  onAssignTask: (prompt: string) => void;
+  isSaving: boolean;
+  isArchiving: boolean;
+  isAssigning: boolean;
+}) {
+  const [managing, setManaging] = React.useState(false);
+  const [description, setDescription] = React.useState(agent.description);
+  const [responsibilities, setResponsibilities] = React.useState(agent.responsibilities.join("\n"));
+  const [hitlMode, setHitlMode] = React.useState<HitlMode>(agent.hitlMode);
+  const [taskPrompt, setTaskPrompt] = React.useState("");
+
+  return (
+    <div className="rounded-md border border-border p-3">
+      <div className="flex items-center justify-between">
+        <div>
+          <span className="font-medium">{agent.name}</span>{" "}
+          <span className="text-xs text-muted-foreground">
+            {HITL_MODE_LABEL[agent.hitlMode]}
+            {agent.status === "archived" ? " · Archived" : ""}
+          </span>
+        </div>
+        <Button size="sm" variant="outline" onClick={() => setManaging((v) => !v)}>
+          {managing ? "Close" : "Manage"}
+        </Button>
+      </div>
+      {!managing && <p className="mt-1 text-sm text-muted-foreground">{agent.description}</p>}
+
+      {managing && (
+        <div className="mt-3 flex flex-col gap-3 border-t border-border pt-3">
+          <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+            Description
+            <textarea
+              className="rounded-md border border-border bg-background p-2 text-sm text-foreground"
+              rows={2}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+            Responsibilities (one per line)
+            <textarea
+              className="rounded-md border border-border bg-background p-2 text-sm text-foreground"
+              rows={3}
+              value={responsibilities}
+              onChange={(e) => setResponsibilities(e.target.value)}
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+            HITL mode
+            <select
+              className="rounded-md border border-border bg-background p-2 text-sm text-foreground"
+              value={hitlMode}
+              onChange={(e) => setHitlMode(e.target.value as HitlMode)}
+            >
+              {HITL_MODES.map((mode) => (
+                <option key={mode} value={mode}>
+                  {HITL_MODE_LABEL[mode]}
+                </option>
+              ))}
+            </select>
+          </label>
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              disabled={isSaving}
+              onClick={() =>
+                onSave({
+                  description,
+                  responsibilities: responsibilities
+                    .split("\n")
+                    .map((r) => r.trim())
+                    .filter(Boolean),
+                  hitlMode,
+                })
+              }
+            >
+              Save
+            </Button>
+            {agent.status === "active" && (
+              <Button size="sm" variant="outline" disabled={isArchiving} onClick={onArchive}>
+                Archive agent
+              </Button>
+            )}
+          </div>
+
+          {agent.status === "active" && (
+            <div className="flex flex-col gap-1 border-t border-border pt-3">
+              <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+                Assign a task
+                <textarea
+                  className="rounded-md border border-border bg-background p-2 text-sm text-foreground"
+                  rows={2}
+                  placeholder="e.g. Draft a reply to the LP update request…"
+                  value={taskPrompt}
+                  onChange={(e) => setTaskPrompt(e.target.value)}
+                />
+              </label>
+              <Button
+                size="sm"
+                className="self-start"
+                disabled={isAssigning || !taskPrompt.trim()}
+                onClick={() => {
+                  onAssignTask(taskPrompt);
+                  setTaskPrompt("");
+                }}
+              >
+                Assign
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
