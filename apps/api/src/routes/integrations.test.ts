@@ -15,7 +15,8 @@ const hasDb =
   Boolean(process.env.DB_ENCRYPTION_KEY) &&
   Boolean(process.env.GOOGLE_CLIENT_ID) &&
   Boolean(process.env.MICROSOFT_CLIENT_ID) &&
-  Boolean(process.env.SLACK_CLIENT_ID);
+  Boolean(process.env.SLACK_CLIENT_ID) &&
+  Boolean(process.env.PANDADOC_CLIENT_ID);
 
 interface ApiEnvelope<T = Record<string, unknown>> {
   success: boolean;
@@ -57,7 +58,7 @@ describe.skipIf(!hasDb)("integrations routes", () => {
     return email;
   }
 
-  it("GET / lists google, microsoft, and slack as not connected before any connection exists", async () => {
+  it("GET / lists google, microsoft, slack, and pandadoc as not connected before any connection exists", async () => {
     const app = createApp();
     const token = await signToken({ email: freshEmail("list"), role: "Executive" });
 
@@ -70,6 +71,7 @@ describe.skipIf(!hasDb)("integrations routes", () => {
       { provider: "google", connected: false },
       { provider: "microsoft", connected: false },
       { provider: "slack", connected: false },
+      { provider: "pandadoc", connected: false },
     ]);
   });
 
@@ -179,6 +181,7 @@ describe.skipIf(!hasDb)("integrations routes", () => {
       { provider: "google", connected: true },
       { provider: "microsoft", connected: false },
       { provider: "slack", connected: false },
+      { provider: "pandadoc", connected: false },
     ]);
 
     const disconnectRes = await app.request("/api/v1/integrations/google", {
@@ -237,6 +240,7 @@ describe.skipIf(!hasDb)("integrations routes", () => {
       { provider: "google", connected: false },
       { provider: "microsoft", connected: true },
       { provider: "slack", connected: false },
+      { provider: "pandadoc", connected: false },
     ]);
 
     const disconnectRes = await app.request("/api/v1/integrations/microsoft", {
@@ -294,6 +298,7 @@ describe.skipIf(!hasDb)("integrations routes", () => {
       { provider: "google", connected: false },
       { provider: "microsoft", connected: false },
       { provider: "slack", connected: true },
+      { provider: "pandadoc", connected: false },
     ]);
 
     const disconnectRes = await app.request("/api/v1/integrations/slack", {
@@ -302,6 +307,80 @@ describe.skipIf(!hasDb)("integrations routes", () => {
     });
     expect(disconnectRes.status).toBe(200);
     expect(await getTokens(executive!.id, "slack")).toBeUndefined();
+  });
+
+  it("GET /:provider/authorize returns a PandaDoc consent URL with state, no PKCE params", async () => {
+    const app = createApp();
+    const token = await signToken({ email: freshEmail("pandadoc-authorize"), role: "Executive" });
+
+    const res = await app.request("/api/v1/integrations/pandadoc/authorize", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(res.status).toBe(200);
+    const body = await jsonBody<{ url: string }>(res);
+    const url = new URL(body.data!.url);
+    expect(url.origin + url.pathname).toBe("https://app.pandadoc.com/oauth2/authorize");
+    expect(url.searchParams.get("state")).toBeTruthy();
+    expect(url.searchParams.get("code_challenge")).toBeNull();
+  });
+
+  it("full round trip for PandaDoc: authorize -> callback connects, list reflects it, disconnect removes it", async () => {
+    const app = createApp();
+    const email = freshEmail("pandadoc-roundtrip");
+    const token = await signToken({ email, role: "Executive" });
+    const headers = { Authorization: `Bearer ${token}` };
+
+    const authorizeRes = await app.request("/api/v1/integrations/pandadoc/authorize", { headers });
+    const { url } = (await jsonBody<{ url: string }>(authorizeRes)).data!;
+    const state = new URL(url).searchParams.get("state")!;
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            access_token: "pandadoc-roundtrip-access-token",
+            refresh_token: "pandadoc-roundtrip-refresh-token",
+            expires_in: 31536000,
+            scope: "read write",
+            token_type: "Bearer",
+          }),
+      }),
+    );
+
+    const callbackRes = await app.request(
+      `/api/v1/integrations/pandadoc/callback?code=fake-auth-code&state=${encodeURIComponent(state)}`,
+      { redirect: "manual" },
+    );
+    expect(callbackRes.status).toBe(302);
+    expect(callbackRes.headers.get("location")).toContain("integration=connected");
+
+    const db = getDb();
+    const [executive] = await db
+      .select()
+      .from(schema.executives)
+      .where(eq(schema.executives.email, email));
+    const tokens = await getTokens(executive!.id, "pandadoc");
+    expect(tokens?.accessToken).toBe("pandadoc-roundtrip-access-token");
+
+    vi.unstubAllGlobals();
+
+    const listRes = await app.request("/api/v1/integrations", { headers });
+    const listBody = await jsonBody<{ provider: string; connected: boolean }[]>(listRes);
+    expect(listBody.data).toEqual([
+      { provider: "google", connected: false },
+      { provider: "microsoft", connected: false },
+      { provider: "slack", connected: false },
+      { provider: "pandadoc", connected: true },
+    ]);
+
+    const disconnectRes = await app.request("/api/v1/integrations/pandadoc", {
+      method: "DELETE",
+      headers,
+    });
+    expect(disconnectRes.status).toBe(200);
+    expect(await getTokens(executive!.id, "pandadoc")).toBeUndefined();
   });
 
   it("callback redirects with an error and stores nothing for a tampered state token", async () => {

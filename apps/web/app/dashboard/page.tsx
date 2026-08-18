@@ -29,6 +29,7 @@ const PROVIDER_LABEL: Record<string, string> = {
   google: "Google (Gmail + Calendar)",
   microsoft: "Microsoft (Outlook Mail + Calendar + Teams)",
   slack: "Slack",
+  pandadoc: "PandaDoc",
 };
 
 // useSearchParams (for ?integration=connected|error from the OAuth

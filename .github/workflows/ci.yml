@@ -142,6 +142,9 @@ jobs:
       SLACK_CLIENT_ID: ci-test-slack-client-id
       SLACK_CLIENT_SECRET: ci-test-slack-client-secret
       SLACK_REDIRECT_URI: http://localhost:3001/api/v1/integrations/slack/callback
+      PANDADOC_CLIENT_ID: ci-test-pandadoc-client-id
+      PANDADOC_CLIENT_SECRET: ci-test-pandadoc-client-secret
+      PANDADOC_REDIRECT_URI: http://localhost:3001/api/v1/integrations/pandadoc/callback
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

@@ -1,9 +1,10 @@
 # @vex-os/integrations
 
 Gmail + Google Calendar landed Sprint 4. Outlook Mail + Calendar landed Sprint 5. Slack landed
-Sprint 6 - all three integrations in the CLAUDE.md Sprint Plan are now built. Microsoft Teams
-landed after that, prioritized post-launch as the cheapest addition to build (it reuses the
-existing Microsoft Graph OAuth app rather than needing a new one).
+Sprint 6 - all three integrations in the CLAUDE.md Sprint Plan are now built. Microsoft Teams and
+PandaDoc landed after that, prioritized post-launch (DL-ARCH-009): Teams as the cheapest addition
+(reuses the existing Microsoft Graph OAuth app), PandaDoc as the board/investor document-sharing
+integration after DocSend was rejected for unverifiable API documentation.
 
 ## Contract
 
@@ -67,6 +68,19 @@ if a future workforce use case drives sustained near-limit traffic.
 Read operations are deliberately scoped to what a caller asks for (a search query, a time
 range) — no bulk historical mailbox/calendar download into VEX-OS storage (API-001 §3.1's data
 minimization requirement).
+
+**`PandaDocAdapter`** (provider `"pandadoc"`) follows the same create-draft/send split as Gmail,
+not Calendar's create-notifies-immediately split: `createDocumentFromTemplate` (`POST
+/documents`) is unrestricted because a newly created document (`document.uploaded` →
+`document.draft`) never notifies its recipients on its own - only `sendDocument` (`POST
+/documents/{id}/send`) does, so only that method is HITL-gated (DL-ARCH-005). PandaDoc's OAuth
+has no PKCE (like Slack) and a much simpler scope model (`read`/`write` cover the whole API,
+confirmed against PandaDoc's own reference docs rather than assumed). One real gap, logged in
+DL-ARCH-009: PandaDoc's public REST API does not expose recipient view/engagement analytics via
+GET - not on `/documents/{id}` (status) nor `/documents/{id}/details`. That data only exists via
+webhooks (`document_viewed`, `document_state_changed`), which would require an inbound webhook
+receiver - a genuinely new architectural pattern (every adapter here is pull/polling-based) -
+deliberately not built in this phase.
 
 Each integration uses the provider's published REST API (API-first policy, DL-ARCH-003). Any
 proposed MCP-based exception requires a logged entry in VEX-OS-API-001 §6 with CAO approval

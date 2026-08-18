@@ -22,6 +22,11 @@ import {
   completeSlackConnection,
   disconnectSlack,
   isSlackConnected,
+  beginPandaDocAuthorization,
+  buildPandaDocAuthorizationUrl,
+  completePandaDocConnection,
+  disconnectPandaDoc,
+  isPandaDocConnected,
 } from "@vex-os/integrations";
 import { fail, ok } from "@vex-os/shared";
 import type { AuthedVariables } from "../middleware/jwt.js";
@@ -32,8 +37,9 @@ import { resolveExecutive } from "../domains/onboarding/resolve-executive.js";
 import { signOAuthState, verifyOAuthState } from "../domains/integrations/oauth-state.js";
 import { logTaskEvent } from "@vex-os/audit";
 
-// Google Sprint 4, Microsoft (Outlook) Sprint 5, Slack Sprint 6.
-const SUPPORTED_PROVIDERS = ["google", "microsoft", "slack"] as const;
+// Google Sprint 4, Microsoft (Outlook) Sprint 5, Slack Sprint 6, PandaDoc
+// post-launch (DL-ARCH-009).
+const SUPPORTED_PROVIDERS = ["google", "microsoft", "slack", "pandadoc"] as const;
 type SupportedProvider = (typeof SUPPORTED_PROVIDERS)[number];
 
 function isSupportedProvider(value: string): value is SupportedProvider {
@@ -59,7 +65,8 @@ async function isProviderConnected(
 ): Promise<boolean> {
   if (provider === "google") return isGoogleConnected(executiveId);
   if (provider === "microsoft") return isMicrosoftConnected(executiveId);
-  return isSlackConnected(executiveId);
+  if (provider === "slack") return isSlackConnected(executiveId);
+  return isPandaDocConnected(executiveId);
 }
 
 integrationsRoute.get("/", async (c) => {
@@ -102,12 +109,20 @@ integrationsRoute.get("/:provider/authorize", async (c) => {
     return c.json(ok({ url }));
   }
 
-  // Slack has no PKCE (oauth.ts's header) - codeVerifier is always "" here,
-  // carried through the state token purely so signOAuthState's shared
-  // payload shape doesn't need a Slack-specific exception.
-  const { codeVerifier } = beginSlackAuthorization();
+  // Slack and PandaDoc both have no PKCE (each provider's oauth.ts header
+  // explains why) - codeVerifier is always "" here, carried through the
+  // state token purely so signOAuthState's shared payload shape doesn't
+  // need a provider-specific exception.
+  if (provider === "slack") {
+    const { codeVerifier } = beginSlackAuthorization();
+    const state = await signOAuthState({ executiveId: executive.id, provider, codeVerifier });
+    const url = buildSlackAuthorizationUrl(state);
+    return c.json(ok({ url }));
+  }
+
+  const { codeVerifier } = beginPandaDocAuthorization();
   const state = await signOAuthState({ executiveId: executive.id, provider, codeVerifier });
-  const url = buildSlackAuthorizationUrl(state);
+  const url = buildPandaDocAuthorizationUrl(state);
   return c.json(ok({ url }));
 });
 
@@ -125,8 +140,10 @@ integrationsRoute.delete("/:provider", async (c) => {
     await disconnectGoogle(executive.id);
   } else if (provider === "microsoft") {
     await disconnectMicrosoft(executive.id);
-  } else {
+  } else if (provider === "slack") {
     await disconnectSlack(executive.id);
+  } else {
+    await disconnectPandaDoc(executive.id);
   }
 
   await logTaskEvent({
@@ -167,6 +184,8 @@ integrationsCallbackRoute.get("/:provider/callback", async (c) => {
       await completeMicrosoftConnection(statePayload.executiveId, code, statePayload.codeVerifier);
     } else if (provider === "slack") {
       await completeSlackConnection(statePayload.executiveId, code);
+    } else if (provider === "pandadoc") {
+      await completePandaDocConnection(statePayload.executiveId, code);
     } else {
       throw new Error(`"${provider}" is not a supported integration.`);
     }

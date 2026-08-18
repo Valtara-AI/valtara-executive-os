@@ -46,3 +46,13 @@ export {
   InsufficientScopeError as SlackInsufficientScopeError,
   SlackApiError,
 } from "./slack/authenticated-fetch.js";
+export { PandaDocAdapter } from "./pandadoc/pandadoc-adapter.js";
+export { PANDADOC_PROVIDER, PANDADOC_SCOPES } from "./pandadoc/scopes.js";
+export {
+  isPandaDocConnected,
+  disconnectPandaDoc,
+  beginPandaDocAuthorization,
+  buildPandaDocAuthorizationUrl,
+  completePandaDocConnection,
+} from "./pandadoc/pandadoc-connection.js";
+export { InsufficientScopeError as PandaDocInsufficientScopeError } from "./pandadoc/authenticated-fetch.js";
