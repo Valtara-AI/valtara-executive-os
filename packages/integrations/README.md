@@ -1,7 +1,9 @@
 # @vex-os/integrations
 
 Gmail + Google Calendar landed Sprint 4. Outlook Mail + Calendar landed Sprint 5. Slack landed
-Sprint 6 - all three integrations in the CLAUDE.md Sprint Plan are now built.
+Sprint 6 - all three integrations in the CLAUDE.md Sprint Plan are now built. Microsoft Teams
+landed after that, prioritized post-launch as the cheapest addition to build (it reuses the
+existing Microsoft Graph OAuth app rather than needing a new one).
 
 ## Contract
 
@@ -32,11 +34,20 @@ record isn't approved, so an unapproved write is never attempted, not merely log
 fact (DL-ARCH-005).
 
 **`GoogleMailAdapter`/`GoogleCalendarAdapter`** (provider `"google"`) and
-**`OutlookMailAdapter`/`OutlookCalendarAdapter`** (provider `"microsoft"`) each share one stored
-token per provider rather than two — connecting via either adapter for a given provider requests
-the union of both scope sets in a single consent screen. See `src/google/scopes.ts` /
-`src/microsoft/scopes.ts` for why this is a deliberate simplification rather than each provider's
-full incremental-authorization pattern.
+**`OutlookMailAdapter`/`OutlookCalendarAdapter`/`TeamsAdapter`** (provider `"microsoft"`) each
+share one stored token per provider rather than one-per-adapter — connecting via any adapter for
+a given provider requests the union of every scope set for that provider in a single consent
+screen. See `src/google/scopes.ts` / `src/microsoft/scopes.ts` for why this is a deliberate
+simplification rather than each provider's full incremental-authorization pattern.
+
+**`TeamsAdapter`** sends to both channels and 1:1/group chats through the same delegated
+permission, `ChannelMessage.Send` — verified against Microsoft Graph's own reference docs rather
+than assumed, since the name strongly implies "channels only" and is easy to get wrong. Reading
+channel messages and chat messages use two different scopes instead
+(`ChannelMessage.Read.All` / `Chat.Read`). `ChannelMessage.Read.All` commonly requires _tenant
+admin_ pre-consent in real Microsoft 365 organizations, unlike every other scope this package
+requests - connecting may fail with an admin-consent error in tenants where that hasn't happened,
+which is expected Graph behavior, not a bug here.
 
 The Microsoft adapters call the Microsoft identity platform v2.0 and Graph v1.0 REST endpoints
 directly (Authorization Code + PKCE), the same way the Google adapters call Google's OAuth/API
