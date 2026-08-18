@@ -50,13 +50,18 @@ jobs:
       - run: npm ci
       # SRS §7 / SEC-001 §4: "Automated vulnerability scanning on every
       # build; critical/high CVEs block deployment." Non-blocking for now
-      # (continue-on-error) rather than gating Build - apps/web currently
-      # carries known high/critical CVEs in its pinned Next.js 14.2.35 with
-      # no fix available short of a breaking major-version upgrade (Next
-      # 16), tracked as a pending decision in the Decision Log rather than
-      # forced through as part of unrelated hardening work. Once that's
-      # resolved, flip this to blocking (remove continue-on-error, add to
-      # the Build job's `needs`).
+      # (continue-on-error) rather than gating Build - DL-SEC-003 (Next.js
+      # 14→16) resolved the CVE chain this was originally added for, but
+      # the same clean-reinstall pass that verified that surfaced a
+      # separate, unrelated high-severity finding (drizzle-orm <0.45.2,
+      # SQL injection via improperly escaped identifiers - GHSA-gpj5-g38j-
+      # 94v9), also only fixable via a breaking upgrade. Flagged to the
+      # user rather than forced through as part of this same pass, same
+      # reasoning as DL-SEC-003 originally: drizzle-orm is this project's
+      # query builder for every table in the schema, and a breaking bump
+      # deserves its own scoped verification pass, not a rider on unrelated
+      # work. Flip this to blocking (remove continue-on-error, add to the
+      # Build job's `needs`) once that's resolved too.
       - name: npm audit (report only)
         continue-on-error: true
         run: npm audit --audit-level=high
