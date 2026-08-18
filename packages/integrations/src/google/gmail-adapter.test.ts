@@ -12,6 +12,7 @@ import { eq } from "drizzle-orm";
 import { getDb, schema } from "@vex-os/database";
 import { saveTokens } from "../token-store.js";
 import { GoogleMailAdapter } from "./gmail-adapter.js";
+import { expectDbErrorMessage } from "../test-utils/expect-db-error-message.js";
 
 const hasDb = Boolean(process.env.DATABASE_URL) && Boolean(process.env.DB_ENCRYPTION_KEY);
 
@@ -113,13 +114,14 @@ describe.skipIf(!hasDb)("GoogleMailAdapter", () => {
       .mockResolvedValue({ ok: true, json: () => Promise.resolve({ id: "sent-1" }) });
     vi.stubGlobal("fetch", fetchMock);
 
-    await expect(
+    await expectDbErrorMessage(
       adapter.sendMessage(
         executive.id,
         { agentId: agent.id, hitlQueueItemId: pendingItem!.id },
         "raw-content",
       ),
-    ).rejects.toThrow(/not approved/i);
+      /not approved/i,
+    );
 
     expect(fetchMock).not.toHaveBeenCalled();
   });
@@ -162,12 +164,13 @@ describe.skipIf(!hasDb)("GoogleMailAdapter", () => {
     const { executive, agent } = await makeConnectedExecutiveWithAgent();
     vi.stubGlobal("fetch", vi.fn());
 
-    await expect(
+    await expectDbErrorMessage(
       adapter.sendMessage(
         executive.id,
         { agentId: agent.id, hitlQueueItemId: "00000000-0000-0000-0000-000000000000" },
         "raw-content",
       ),
-    ).rejects.toThrow(/does not reference/i);
+      /does not reference/i,
+    );
   });
 });

@@ -12,6 +12,6 @@
   "dependencies": {
     "@vex-os/database": "*",
     "@vex-os/shared": "*",
-    "drizzle-orm": "^0.38.2"
+    "drizzle-orm": "^0.45.2"
   }
 }

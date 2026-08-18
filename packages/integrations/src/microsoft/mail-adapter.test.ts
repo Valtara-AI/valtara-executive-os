@@ -7,6 +7,7 @@ import { eq } from "drizzle-orm";
 import { getDb, schema } from "@vex-os/database";
 import { saveTokens } from "../token-store.js";
 import { OutlookMailAdapter } from "./mail-adapter.js";
+import { expectDbErrorMessage } from "../test-utils/expect-db-error-message.js";
 
 const hasDb = Boolean(process.env.DATABASE_URL) && Boolean(process.env.DB_ENCRYPTION_KEY);
 
@@ -119,13 +120,14 @@ describe.skipIf(!hasDb)("OutlookMailAdapter", () => {
     const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve({}) });
     vi.stubGlobal("fetch", fetchMock);
 
-    await expect(
+    await expectDbErrorMessage(
       adapter.sendMail(
         executive.id,
         { agentId: agent.id, hitlQueueItemId: pendingItem!.id },
         { subject: "S", body: "B", toRecipients: [{ address: "a@example.com" }] },
       ),
-    ).rejects.toThrow(/not approved/i);
+      /not approved/i,
+    );
 
     expect(fetchMock).not.toHaveBeenCalled();
   });
@@ -167,12 +169,13 @@ describe.skipIf(!hasDb)("OutlookMailAdapter", () => {
     const { executive, agent } = await makeConnectedExecutiveWithAgent();
     vi.stubGlobal("fetch", vi.fn());
 
-    await expect(
+    await expectDbErrorMessage(
       adapter.sendMail(
         executive.id,
         { agentId: agent.id, hitlQueueItemId: "00000000-0000-0000-0000-000000000000" },
         { subject: "S", body: "B", toRecipients: [{ address: "a@example.com" }] },
       ),
-    ).rejects.toThrow(/does not reference/i);
+      /does not reference/i,
+    );
   });
 });

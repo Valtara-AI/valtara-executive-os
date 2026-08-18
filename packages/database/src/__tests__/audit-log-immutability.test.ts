@@ -35,6 +35,7 @@ import { randomUUID } from "node:crypto";
 import { beforeAll, describe, expect, it } from "vitest";
 import { eq, sql } from "drizzle-orm";
 import { getDb, schema } from "../client.js";
+import { expectDbErrorMessage } from "./expect-db-error-message.js";
 
 const hasDb = Boolean(process.env.DATABASE_URL);
 
@@ -94,12 +95,13 @@ describe.skipIf(!hasDb)("audit_log_entries immutability", () => {
     if (!isSuperuser && !hasUpdateGrant) {
       // vexos_app's real configuration: blocked at the grant layer,
       // before RLS is even relevant.
-      await expect(
+      await expectDbErrorMessage(
         db
           .update(schema.auditLogEntries)
           .set({ action: "tampered_action" })
           .where(eq(schema.auditLogEntries.id, inserted.id)),
-      ).rejects.toThrow(/permission denied/i);
+        /permission denied/i,
+      );
       return;
     }
 
@@ -123,9 +125,10 @@ describe.skipIf(!hasDb)("audit_log_entries immutability", () => {
     const inserted = await insertRow("should_survive_delete");
 
     if (!isSuperuser && !hasUpdateGrant) {
-      await expect(
+      await expectDbErrorMessage(
         db.delete(schema.auditLogEntries).where(eq(schema.auditLogEntries.id, inserted.id)),
-      ).rejects.toThrow(/permission denied/i);
+        /permission denied/i,
+      );
       return;
     }
 

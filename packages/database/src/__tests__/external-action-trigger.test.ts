@@ -13,6 +13,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
 import { getDb, schema } from "../client.js";
+import { expectDbErrorMessage } from "./expect-db-error-message.js";
 
 const hasDb = Boolean(process.env.DATABASE_URL);
 
@@ -66,13 +67,14 @@ describe.skipIf(!hasDb)("external_actions HITL enforcement trigger", () => {
       })
       .returning();
 
-    await expect(
+    await expectDbErrorMessage(
       db.insert(schema.externalActions).values({
         actionType: "send_email",
         agentId,
         hitlQueueItemId: pendingItem!.id,
       }),
-    ).rejects.toThrow(/not approved/i);
+      /not approved/i,
+    );
   });
 
   it("allows an external_action once the HITL item is approved", async () => {
@@ -101,12 +103,13 @@ describe.skipIf(!hasDb)("external_actions HITL enforcement trigger", () => {
   });
 
   it("rejects an external_action referencing a nonexistent HITL item", async () => {
-    await expect(
+    await expectDbErrorMessage(
       db.insert(schema.externalActions).values({
         actionType: "send_email",
         agentId,
         hitlQueueItemId: "00000000-0000-0000-0000-000000000000",
       }),
-    ).rejects.toThrow(/does not reference/i);
+      /does not reference/i,
+    );
   });
 });

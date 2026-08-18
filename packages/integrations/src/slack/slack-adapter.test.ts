@@ -7,6 +7,7 @@ import { eq } from "drizzle-orm";
 import { getDb, schema } from "@vex-os/database";
 import { saveTokens } from "../token-store.js";
 import { SlackAdapter } from "./slack-adapter.js";
+import { expectDbErrorMessage } from "../test-utils/expect-db-error-message.js";
 
 const hasDb = Boolean(process.env.DATABASE_URL) && Boolean(process.env.DB_ENCRYPTION_KEY);
 
@@ -87,22 +88,21 @@ describe.skipIf(!hasDb)("SlackAdapter", () => {
       .values({ executiveId: executive.id, status: "pending", originalOutput: "Post update" })
       .returning();
 
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve({ ok: true, ts: "1", channel: "C1" }),
-      });
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ ok: true, ts: "1", channel: "C1" }),
+    });
     vi.stubGlobal("fetch", fetchMock);
 
-    await expect(
+    await expectDbErrorMessage(
       adapter.postMessage(
         executive.id,
         { agentId: agent.id, hitlQueueItemId: pendingItem!.id },
         "C1",
         "Status update",
       ),
-    ).rejects.toThrow(/not approved/i);
+      /not approved/i,
+    );
 
     expect(fetchMock).not.toHaveBeenCalled();
   });
@@ -149,13 +149,14 @@ describe.skipIf(!hasDb)("SlackAdapter", () => {
     const { executive, agent } = await makeConnectedExecutiveWithAgent();
     vi.stubGlobal("fetch", vi.fn());
 
-    await expect(
+    await expectDbErrorMessage(
       adapter.postMessage(
         executive.id,
         { agentId: agent.id, hitlQueueItemId: "00000000-0000-0000-0000-000000000000" },
         "C1",
         "Status update",
       ),
-    ).rejects.toThrow(/does not reference/i);
+      /does not reference/i,
+    );
   });
 });

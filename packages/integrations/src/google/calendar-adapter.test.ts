@@ -7,6 +7,7 @@ import { eq } from "drizzle-orm";
 import { getDb, schema } from "@vex-os/database";
 import { saveTokens } from "../token-store.js";
 import { GoogleCalendarAdapter } from "./calendar-adapter.js";
+import { expectDbErrorMessage } from "../test-utils/expect-db-error-message.js";
 
 const hasDb = Boolean(process.env.DATABASE_URL) && Boolean(process.env.DB_ENCRYPTION_KEY);
 
@@ -92,13 +93,14 @@ describe.skipIf(!hasDb)("GoogleCalendarAdapter", () => {
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
 
-    await expect(
+    await expectDbErrorMessage(
       adapter.createEvent(
         executive.id,
         { agentId: agent.id, hitlQueueItemId: pendingItem!.id },
         { summary: "Meeting", start: "2026-03-15T10:00:00Z", end: "2026-03-15T10:30:00Z" },
       ),
-    ).rejects.toThrow(/not approved/i);
+      /not approved/i,
+    );
 
     expect(fetchMock).not.toHaveBeenCalled();
   });
@@ -120,12 +122,10 @@ describe.skipIf(!hasDb)("GoogleCalendarAdapter", () => {
 
     vi.stubGlobal(
       "fetch",
-      vi
-        .fn()
-        .mockResolvedValue({
-          ok: true,
-          json: () => Promise.resolve({ id: "event-1", summary: "Meeting" }),
-        }),
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ id: "event-1", summary: "Meeting" }),
+      }),
     );
 
     const event = await adapter.createEvent(
