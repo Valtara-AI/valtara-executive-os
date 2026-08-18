@@ -1,7 +1,15 @@
 import { defineConfig } from "drizzle-kit";
 
-if (!process.env.DATABASE_URL) {
-  throw new Error("DATABASE_URL must be set to run drizzle-kit (see .env.example).");
+// DL-SEC-004: prefer the privileged migration connection if set - `push`/
+// `introspect` would need DDL rights DATABASE_URL (the restricted
+// vexos_app runtime role) no longer has. `generate` (the only drizzle-kit
+// command actually used day-to-day) diffs schema files against migration
+// history and doesn't touch a live DB either way.
+const connectionString = process.env.DATABASE_MIGRATION_URL ?? process.env.DATABASE_URL;
+if (!connectionString) {
+  throw new Error(
+    "DATABASE_MIGRATION_URL (or DATABASE_URL) must be set to run drizzle-kit (see .env.example).",
+  );
 }
 
 export default defineConfig({
@@ -18,7 +26,7 @@ export default defineConfig({
   out: "./src/migrations",
   dialect: "postgresql",
   dbCredentials: {
-    url: process.env.DATABASE_URL,
+    url: connectionString,
   },
   strict: true,
   verbose: true,

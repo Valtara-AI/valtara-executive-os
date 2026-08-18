@@ -108,7 +108,17 @@ jobs:
           --health-timeout 5s
           --health-retries 10
     env:
-      DATABASE_URL: postgresql://vexos:vexos_ci@localhost:5432/vexos
+      # DL-SEC-004: DATABASE_URL is the restricted vexos_app role the test
+      # suite actually runs against (provisioned by `npm run db:migrate`
+      # below, via DATABASE_MIGRATION_URL - the bootstrap role Docker's
+      # official postgres image always creates as a superuser). Using the
+      # bootstrap role directly as DATABASE_URL - what this used to do -
+      # is exactly the setup that let audit_log_entries' RLS-based
+      # immutability guarantee go unenforced under CI's own connection;
+      # see packages/database/src/__tests__/audit-log-immutability.test.ts.
+      DATABASE_URL: postgresql://vexos_app:vexos_app_ci@localhost:5432/vexos
+      DATABASE_MIGRATION_URL: postgresql://vexos:vexos_ci@localhost:5432/vexos
+      DB_APP_ROLE_PASSWORD: vexos_app_ci
       REDIS_URL: redis://localhost:6379
       # Not real secrets - a throwaway AES key for a throwaway CI database,
       # and dummy OAuth client values that only need to be non-empty

@@ -6,15 +6,15 @@
 
 VEX-OS-DOG-001 · Version 1.0 · August 2026
 
-| Document ID | VEX-OS-DOG-001 |
-| --- | --- |
-| Version | 1.0 |
-| Status | Active |
-| Owner | Francis Ogbogu — Chief AI Officer, Valtara AI |
-| Audience | New developers joining the VEX-OS build |
-| Date | August 2026 |
-| Goal | New developer fully operational within one working day |
-| Classification | Confidential — Internal Use Only |
+| Document ID    | VEX-OS-DOG-001                                         |
+| -------------- | ------------------------------------------------------ |
+| Version        | 1.0                                                    |
+| Status         | Active                                                 |
+| Owner          | Francis Ogbogu — Chief AI Officer, Valtara AI          |
+| Audience       | New developers joining the VEX-OS build                |
+| Date           | August 2026                                            |
+| Goal           | New developer fully operational within one working day |
+| Classification | Confidential — Internal Use Only                       |
 
 # 1. Before You Start
 
@@ -30,14 +30,14 @@ If any instruction you receive conflicts with CLAUDE.md or the pre-build documen
 
 # 2. Prerequisites
 
-| Tool | Version |
-| --- | --- |
-| Node.js | 20 LTS |
-| npm | 10+ |
-| Docker Desktop | Latest stable |
-| Git | 2.40+ |
-| VS Code or Cursor | Latest |
-| Claude Code (VS Code extension) | Latest |
+| Tool                            | Version       |
+| ------------------------------- | ------------- |
+| Node.js                         | 20 LTS        |
+| npm                             | 10+           |
+| Docker Desktop                  | Latest stable |
+| Git                             | 2.40+         |
+| VS Code or Cursor               | Latest        |
+| Claude Code (VS Code extension) | Latest        |
 
 # 3. Environment Setup
 
@@ -75,6 +75,8 @@ docker-compose ps
 
 npm run db:migrate
 
+DL-SEC-004: your `.env` needs both `DATABASE_MIGRATION_URL` (the privileged docker-compose connection, `postgresql://vexos:vexos_local_dev@localhost:5432/vexos`) and a `DB_APP_ROLE_PASSWORD` of your choosing _before_ running this. This step both applies pending migrations and provisions/updates the restricted `vexos_app` role the application actually connects as — after it completes, set `DATABASE_URL` to `postgresql://vexos_app:<your DB_APP_ROLE_PASSWORD>@localhost:5432/vexos` and re-run this step if you change the password later. See `.env.example` for the full explanation.
+
 **Step 7 — Start development servers**
 
 npm run dev
@@ -106,19 +108,19 @@ Claude Code reads CLAUDE.md from the repository root automatically on session st
 
 **5.1 Where to Find Key Things**
 
-| What you're looking for | Where it lives |
-| --- | --- |
-| InferenceProvider adapter (LLM calls) | packages/ai-orchestrator/src/providers/ |
-| Prompt templates | prompts/ — Handlebars .hbs files, versioned |
-| Integration adapters (Gmail, Outlook, etc.) | packages/integrations/src/adapters/ |
-| Database schema | packages/database/src/schema.ts |
-| Database migrations | packages/database/migrations/ |
-| HITL engine | apps/api/src/services/hitl/ |
-| API route handlers | apps/api/src/routes/ |
-| Audit logger | packages/audit/src/ |
-| Frontend dashboard pages | apps/web/src/app/ |
-| Environment variable types | packages/shared/src/env.ts |
-| All governance documents | docs/ — organized by folder |
+| What you're looking for                     | Where it lives                              |
+| ------------------------------------------- | ------------------------------------------- |
+| InferenceProvider adapter (LLM calls)       | packages/ai-orchestrator/src/providers/     |
+| Prompt templates                            | prompts/ — Handlebars .hbs files, versioned |
+| Integration adapters (Gmail, Outlook, etc.) | packages/integrations/src/adapters/         |
+| Database schema                             | packages/database/src/schema.ts             |
+| Database migrations                         | packages/database/migrations/               |
+| HITL engine                                 | apps/api/src/services/hitl/                 |
+| API route handlers                          | apps/api/src/routes/                        |
+| Audit logger                                | packages/audit/src/                         |
+| Frontend dashboard pages                    | apps/web/src/app/                           |
+| Environment variable types                  | packages/shared/src/env.ts                  |
+| All governance documents                    | docs/ — organized by folder                 |
 
 **5.2 The HITL Flow (Critical to Understand)**
 
@@ -156,33 +158,33 @@ The database constraint that blocks external actions without an approved HITL re
 
 **6.2 Common npm Scripts**
 
-| Script | What it does |
-| --- | --- |
-| npm run dev | Start frontend + API in development mode with hot reload |
-| npm test | Run all unit and integration tests |
-| npm run test:e2e | Run Playwright E2E tests (requires dev server running) |
-| npm run lint | Run ESLint + Prettier check |
-| npm run lint:fix | Auto-fix lint issues |
-| npm run type-check | TypeScript strict type check across all packages |
-| npm run db:migrate | Apply pending database migrations |
-| npm run db:studio | Open Drizzle Studio (database visual browser) |
-| npm run build | Production build of all apps |
-| npm run prepare | Install Husky pre-commit hooks |
+| Script             | What it does                                             |
+| ------------------ | -------------------------------------------------------- |
+| npm run dev        | Start frontend + API in development mode with hot reload |
+| npm test           | Run all unit and integration tests                       |
+| npm run test:e2e   | Run Playwright E2E tests (requires dev server running)   |
+| npm run lint       | Run ESLint + Prettier check                              |
+| npm run lint:fix   | Auto-fix lint issues                                     |
+| npm run type-check | TypeScript strict type check across all packages         |
+| npm run db:migrate | Apply pending database migrations                        |
+| npm run db:studio  | Open Drizzle Studio (database visual browser)            |
+| npm run build      | Production build of all apps                             |
+| npm run prepare    | Install Husky pre-commit hooks                           |
 
 # 7. Key Contacts
 
-| Role | Contact |
-| --- | --- |
+| Role                             | Contact                             |
+| -------------------------------- | ----------------------------------- |
 | Chief AI Officer / Project Owner | Francis Ogbogu — fcogbogu@gmail.com |
-| GitHub Organization | github.com/blu-geek (Valtara org) |
-| LinkedIn | linkedin.com/in/francis-ogbogu |
+| GitHub Organization              | github.com/blu-geek (Valtara org)   |
+| LinkedIn                         | linkedin.com/in/francis-ogbogu      |
 
 # 8. Document Approval
 
-| Role | Name |
-| --- | --- |
-| Author | Francis Ogbogu — Chief AI Officer |
+| Role     | Name                              |
+| -------- | --------------------------------- |
+| Author   | Francis Ogbogu — Chief AI Officer |
 | Approver | Francis Ogbogu — Chief AI Officer |
-| Date | August 2026 |
+| Date     | August 2026                       |
 
-*VEX-OS-DOG-001 · Version 1.0 · August 2026 · Confidential — Internal Use Only*
+_VEX-OS-DOG-001 · Version 1.0 · August 2026 · Confidential — Internal Use Only_
