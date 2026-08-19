@@ -102,6 +102,19 @@ function DashboardContent() {
     refetchInterval: 30_000,
   });
 
+  // "all" then filtered client-side to non-pending, rather than a second
+  // status value on the API - the pending item and its resolved outcome
+  // both come from the same underlying list, and hitl.ts's GET / already
+  // sorts by actionedAt desc, which is exactly the order history wants.
+  const hitlHistoryQuery = useQuery({
+    queryKey: ["hitl-history"],
+    queryFn: () => listHitlQueue(accessToken!, "all"),
+    enabled: Boolean(accessToken),
+  });
+  const hitlHistory = (hitlHistoryQuery.data ?? [])
+    .filter((item) => item.status !== "pending")
+    .slice(0, 10);
+
   const tasksQuery = useQuery({
     queryKey: ["tasks"],
     queryFn: () => listTasks(accessToken!),
@@ -305,6 +318,18 @@ function DashboardContent() {
         </div>
       </Card>
 
+      <Card>
+        <h2 className="mb-4 text-lg font-medium">History</h2>
+        {hitlHistory.length === 0 && (
+          <p className="text-sm text-muted-foreground">Nothing resolved yet.</p>
+        )}
+        <ul className="flex flex-col gap-2">
+          {hitlHistory.map((item) => (
+            <HitlHistoryRow key={item.id} item={item} />
+          ))}
+        </ul>
+      </Card>
+
       {/* Agents/Integrations are Executive-only (SEC-001 §3.2) - a
           Delegate's identical API calls 403, so these sections are hidden
           rather than rendered broken. */}
@@ -465,6 +490,32 @@ function HitlQueueRow({
         )}
       </div>
     </div>
+  );
+}
+
+const HITL_HISTORY_STATUS_LABEL: Record<string, string> = {
+  approved: "Approved",
+  edited: "Edited & approved",
+  rejected: "Rejected",
+};
+
+function HitlHistoryRow({ item }: { item: HitlQueueItem }) {
+  return (
+    <li className="rounded-md border border-border px-3 py-2 text-sm">
+      <div className="flex items-center justify-between">
+        <span className="font-medium">{HITL_HISTORY_STATUS_LABEL[item.status] ?? item.status}</span>
+        {item.actionedAt && (
+          <span className="text-xs text-muted-foreground">
+            {new Date(item.actionedAt).toLocaleString()}
+          </span>
+        )}
+      </div>
+      <p className="mt-1 text-muted-foreground">
+        {item.status === "rejected"
+          ? (item.rejectionReason ?? item.originalOutput)
+          : (item.finalOutput ?? item.originalOutput)}
+      </p>
+    </li>
   );
 }
 
