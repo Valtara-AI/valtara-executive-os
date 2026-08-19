@@ -37,6 +37,18 @@ const RESTRICTED_LLM_SDK_IMPORTS = [
   },
 ];
 
+// DL-ARCH-010: the Stripe SDK is only permitted in packages/billing's own
+// client wrapper, the same "one adapter file" pattern CLAUDE.md's #1
+// non-negotiable enforces for LLM provider SDKs (RESTRICTED_LLM_SDK_IMPORTS
+// above) - kept as a separate array since it isn't an LLM concern.
+const RESTRICTED_BILLING_SDK_IMPORTS = [
+  {
+    group: ["stripe", "stripe/*"],
+    message:
+      "Do not import stripe directly. Route all Stripe calls through packages/billing's stripe-client.ts.",
+  },
+];
+
 export default tseslint.config(
   {
     ignores: [
@@ -58,13 +70,27 @@ export default tseslint.config(
         "error",
         { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
       ],
-      "no-restricted-imports": ["error", { patterns: RESTRICTED_LLM_SDK_IMPORTS }],
+      "no-restricted-imports": [
+        "error",
+        { patterns: [...RESTRICTED_LLM_SDK_IMPORTS, ...RESTRICTED_BILLING_SDK_IMPORTS] },
+      ],
     },
   },
   {
     // The one carve-out: concrete provider adapters are the only files
     // permitted to import an LLM provider SDK directly.
     files: ["packages/ai-orchestrator/src/providers/**/*.ts"],
+    rules: {
+      "no-restricted-imports": "off",
+    },
+  },
+  {
+    // The carve-out for Stripe: stripe-client.ts is the only file that
+    // constructs a client; webhook-handler.ts additionally needs
+    // `import type Stripe from "stripe"` for the Subscription/Event type
+    // shapes it dispatches on (a type-only import, but no-restricted-imports
+    // doesn't distinguish type imports from value imports).
+    files: ["packages/billing/src/stripe-client.ts", "packages/billing/src/webhook-handler.ts"],
     rules: {
       "no-restricted-imports": "off",
     },

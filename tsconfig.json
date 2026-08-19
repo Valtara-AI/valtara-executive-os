@@ -6,6 +6,7 @@
     { "path": "packages/ai-orchestrator" },
     { "path": "packages/audit" },
     { "path": "packages/integrations" },
+    { "path": "packages/billing" },
     { "path": "apps/api" }
   ]
 }

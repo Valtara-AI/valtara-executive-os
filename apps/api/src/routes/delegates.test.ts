@@ -43,9 +43,33 @@ describe.skipIf(!hasDb)("delegate invitation routes", () => {
     return email;
   }
 
+  // DL-ARCH-010: POST /executive/delegates is now entitlement-gated
+  // (assertSeatLimit) - see integrations.test.ts's identical helper.
+  async function seedActiveSubscription(email: string): Promise<void> {
+    const db = getDb();
+    let [executive] = await db
+      .select()
+      .from(schema.executives)
+      .where(eq(schema.executives.email, email));
+    if (!executive) {
+      [executive] = await db
+        .insert(schema.executives)
+        .values({ name: email, email, onboardingStatus: "not_started" })
+        .returning();
+    }
+    await db.insert(schema.subscriptions).values({
+      executiveId: executive!.id,
+      stripeCustomerId: "cus_test",
+      stripeSubscriptionId: `sub_test_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+      tier: "pro",
+      status: "active",
+    });
+  }
+
   it("full flow: Executive invites, Delegate sees it pending, accepts, gains HITL access", async () => {
     const app = createApp();
     const execEmail = freshEmail("owner");
+    await seedActiveSubscription(execEmail);
     const delegateEmail = `delegate-${Date.now()}-${Math.random().toString(36).slice(2)}@example.com`;
     const execToken = await signToken({ email: execEmail, role: "Executive" });
     const execHeaders = {
@@ -97,7 +121,9 @@ describe.skipIf(!hasDb)("delegate invitation routes", () => {
 
   it("Executive can list and revoke a delegate link", async () => {
     const app = createApp();
-    const execToken = await signToken({ email: freshEmail("revoke-owner"), role: "Executive" });
+    const revokeOwnerEmail = freshEmail("revoke-owner");
+    await seedActiveSubscription(revokeOwnerEmail);
+    const execToken = await signToken({ email: revokeOwnerEmail, role: "Executive" });
     const headers = { Authorization: `Bearer ${execToken}`, "Content-Type": "application/json" };
     const delegateEmail = `revoke-target-${Date.now()}@example.com`;
 
@@ -123,7 +149,9 @@ describe.skipIf(!hasDb)("delegate invitation routes", () => {
 
   it("a Delegate can decline an invitation", async () => {
     const app = createApp();
-    const execToken = await signToken({ email: freshEmail("decline-owner"), role: "Executive" });
+    const declineOwnerEmail = freshEmail("decline-owner");
+    await seedActiveSubscription(declineOwnerEmail);
+    const execToken = await signToken({ email: declineOwnerEmail, role: "Executive" });
     const execHeaders = {
       Authorization: `Bearer ${execToken}`,
       "Content-Type": "application/json",
@@ -148,7 +176,9 @@ describe.skipIf(!hasDb)("delegate invitation routes", () => {
 
   it("a Delegate cannot accept an invitation addressed to a different email", async () => {
     const app = createApp();
-    const execToken = await signToken({ email: freshEmail("mismatch-owner"), role: "Executive" });
+    const mismatchOwnerEmail = freshEmail("mismatch-owner");
+    await seedActiveSubscription(mismatchOwnerEmail);
+    const execToken = await signToken({ email: mismatchOwnerEmail, role: "Executive" });
     const execHeaders = {
       Authorization: `Bearer ${execToken}`,
       "Content-Type": "application/json",
@@ -170,6 +200,21 @@ describe.skipIf(!hasDb)("delegate invitation routes", () => {
       headers: { Authorization: `Bearer ${impostorToken}` },
     });
     expect(res.status).toBe(404);
+  });
+
+  it("returns 402 when inviting a delegate with no active subscription", async () => {
+    const app = createApp();
+    const execToken = await signToken({
+      email: freshEmail("no-subscription-owner"),
+      role: "Executive",
+    });
+    const res = await app.request("/api/v1/executive/delegates", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${execToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ email: `some-delegate-${Date.now()}@example.com` }),
+    });
+    expect(res.status).toBe(402);
+    expect((await jsonBody(res)).error?.code).toBe("ENTITLEMENT_LIMIT");
   });
 
   it("rejects invite/list/revoke from a non-Executive role", async () => {

@@ -46,9 +46,35 @@ describe.skipIf(!hasDb)("agents routes", () => {
     return email;
   }
 
+  // DL-ARCH-010: POST /agents and POST /agents/:id/tasks are now
+  // entitlement-gated (assertAgentLimit / assertTaskVolume) - see
+  // integrations.test.ts's identical helper for why this seeds a
+  // subscription directly rather than going through real Stripe checkout.
+  async function seedActiveSubscription(email: string): Promise<void> {
+    const db = getDb();
+    let [executive] = await db
+      .select()
+      .from(schema.executives)
+      .where(eq(schema.executives.email, email));
+    if (!executive) {
+      [executive] = await db
+        .insert(schema.executives)
+        .values({ name: email, email, onboardingStatus: "not_started" })
+        .returning();
+    }
+    await db.insert(schema.subscriptions).values({
+      executiveId: executive!.id,
+      stripeCustomerId: "cus_test",
+      stripeSubscriptionId: `sub_test_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+      tier: "pro",
+      status: "active",
+    });
+  }
+
   it("creates, lists, gets, updates, and archives an agent for the authenticated executive", async () => {
     const app = createApp();
     const email = freshEmail("crud");
+    await seedActiveSubscription(email);
     const token = await signToken({ email, role: "Executive" });
     const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
 
@@ -94,6 +120,7 @@ describe.skipIf(!hasDb)("agents routes", () => {
   it("returns 409 when assigning a task to an archived agent", async () => {
     const app = createApp();
     const email = freshEmail("archived-task");
+    await seedActiveSubscription(email);
     const token = await signToken({ email, role: "Executive" });
     const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
 
@@ -116,7 +143,9 @@ describe.skipIf(!hasDb)("agents routes", () => {
 
   it("isolates agents between two different executives - cross-access returns 404, not the other executive's data", async () => {
     const app = createApp();
-    const tokenA = await signToken({ email: freshEmail("owner-a"), role: "Executive" });
+    const emailA = freshEmail("owner-a");
+    await seedActiveSubscription(emailA);
+    const tokenA = await signToken({ email: emailA, role: "Executive" });
     const tokenB = await signToken({ email: freshEmail("owner-b"), role: "Executive" });
     const headersA = { Authorization: `Bearer ${tokenA}`, "Content-Type": "application/json" };
     const headersB = { Authorization: `Bearer ${tokenB}`, "Content-Type": "application/json" };
@@ -146,6 +175,20 @@ describe.skipIf(!hasDb)("agents routes", () => {
     // check and not just a broken route.
     const getAsA = await app.request(`/api/v1/agents/${agentId}`, { headers: headersA });
     expect(getAsA.status).toBe(200);
+  });
+
+  it("returns 402 when creating an agent with no active subscription", async () => {
+    const app = createApp();
+    const token = await signToken({ email: freshEmail("no-subscription"), role: "Executive" });
+    const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
+
+    const res = await app.request("/api/v1/agents", {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ name: "A", description: "d", responsibilities: ["r"] }),
+    });
+    expect(res.status).toBe(402);
+    expect((await jsonBody(res)).error?.code).toBe("ENTITLEMENT_LIMIT");
   });
 
   it("rejects unauthenticated and non-Executive-role requests", async () => {

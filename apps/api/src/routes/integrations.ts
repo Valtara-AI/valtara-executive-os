@@ -28,6 +28,7 @@ import {
   disconnectPandaDoc,
   isPandaDocConnected,
 } from "@vex-os/integrations";
+import { assertIntegrationAllowed, EntitlementError } from "@vex-os/billing";
 import { fail, ok } from "@vex-os/shared";
 import type { AuthedVariables } from "../middleware/jwt.js";
 import { jwtMiddleware } from "../middleware/jwt.js";
@@ -89,6 +90,21 @@ integrationsRoute.get("/:provider/authorize", async (c) => {
     );
   }
   const executive = await resolveExecutive(c.get("user"));
+
+  // Gated at connection time only, not on every subsequent Gmail/Calendar/
+  // Slack/PandaDoc API call - a downgrade after connecting doesn't
+  // retroactively revoke an already-connected integration's stored tokens.
+  // Enforcing per-call would mean threading an entitlement check into
+  // every adapter's authenticated-fetch (google/microsoft/slack/pandadoc),
+  // which isn't justified for a first pass.
+  try {
+    await assertIntegrationAllowed(executive.id, provider);
+  } catch (err) {
+    if (err instanceof EntitlementError) {
+      return c.json(fail("ENTITLEMENT_LIMIT", err.message), 402);
+    }
+    throw err;
+  }
 
   // PKCE's real data dependency (Google/Microsoft only - Slack has none,
   // see below): codeVerifier must exist before state (which embeds it) can

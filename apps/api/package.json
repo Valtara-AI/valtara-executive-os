@@ -17,6 +17,7 @@
   "dependencies": {
     "@vex-os/ai-orchestrator": "*",
     "@vex-os/audit": "*",
+    "@vex-os/billing": "*",
     "@vex-os/database": "*",
     "@vex-os/integrations": "*",
     "@vex-os/shared": "*",

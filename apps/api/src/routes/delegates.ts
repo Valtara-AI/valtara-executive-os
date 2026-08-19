@@ -8,6 +8,7 @@ import { Hono, type Context } from "hono";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { getDb, schema } from "@vex-os/database";
+import { assertSeatLimit, EntitlementError } from "@vex-os/billing";
 import { fail, ok } from "@vex-os/shared";
 import type { AuthedVariables } from "../middleware/jwt.js";
 import { requireRole } from "../middleware/rbac.js";
@@ -38,6 +39,21 @@ executiveDelegatesRoute.post("/", async (c) => {
     );
   }
   const executive = await resolveExecutive(c.get("user"));
+
+  // Checked before inviteDelegate's own idempotency logic - a known,
+  // minor over-restriction: re-sending an invite to an *already* pending/
+  // accepted delegate would normally be a no-op (inviteDelegate just
+  // returns the existing row), but at the seat limit it's blocked the
+  // same as a genuinely new invite would be, rather than special-cased.
+  try {
+    await assertSeatLimit(executive.id);
+  } catch (err) {
+    if (err instanceof EntitlementError) {
+      return c.json(fail("ENTITLEMENT_LIMIT", err.message), 402);
+    }
+    throw err;
+  }
+
   const link = await inviteDelegate(executive.id, parsed.data.email);
   return c.json(ok(link), 201);
 });

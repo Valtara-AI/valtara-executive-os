@@ -1,0 +1,18 @@
+{
+  "name": "@vex-os/billing",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Stripe subscription billing and tier entitlements (DL-ARCH-010)",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "typecheck": "tsc --build"
+  },
+  "dependencies": {
+    "@vex-os/database": "*",
+    "@vex-os/shared": "*",
+    "drizzle-orm": "^0.45.2",
+    "stripe": "^22.5.0"
+  }
+}

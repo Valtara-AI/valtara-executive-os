@@ -19,6 +19,8 @@ import { dashboardRoute } from "./routes/dashboard.js";
 import { executiveProfileRoute } from "./routes/executive-profile.js";
 import { integrationsRoute, integrationsCallbackRoute } from "./routes/integrations.js";
 import { complianceRoute } from "./routes/compliance.js";
+import { billingRoute } from "./routes/billing.js";
+import { webhooksRoute } from "./routes/webhooks.js";
 
 // API-001 §2.1: base URL /api/v1/, all endpoints require authentication
 // except /auth/* (and, by the same rationale, /health).
@@ -68,6 +70,14 @@ export function createApp() {
 
   v1.use("/compliance/*", jwtMiddleware, generalRateLimit);
   v1.route("/compliance", complianceRoute);
+
+  v1.use("/billing/*", jwtMiddleware, generalRateLimit);
+  v1.route("/billing", billingRoute);
+
+  // Unauthenticated like integrationsCallbackRoute above - Stripe calls
+  // this directly, never via a browser or SPA (routes/webhooks.ts's file
+  // header).
+  v1.route("/webhooks", webhooksRoute);
 
   // Service-to-service only - internalSecretMiddleware, not jwtMiddleware.
   // Called by apps/web's NextAuth server-side, never by a browser.

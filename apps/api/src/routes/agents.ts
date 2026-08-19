@@ -13,6 +13,7 @@ import { Hono } from "hono";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { getDb, schema } from "@vex-os/database";
+import { assertAgentLimit, assertTaskVolume, EntitlementError } from "@vex-os/billing";
 import { HITL_MODES, fail, ok, type HitlMode } from "@vex-os/shared";
 import type { AuthedVariables } from "../middleware/jwt.js";
 import { requireRole } from "../middleware/rbac.js";
@@ -65,6 +66,15 @@ agentsRoute.post("/", async (c) => {
     );
   }
   const executive = await resolveExecutive(c.get("user"));
+
+  try {
+    await assertAgentLimit(executive.id);
+  } catch (err) {
+    if (err instanceof EntitlementError) {
+      return c.json(fail("ENTITLEMENT_LIMIT", err.message), 402);
+    }
+    throw err;
+  }
 
   const [agent] = await getDb()
     .insert(schema.agents)
@@ -137,6 +147,15 @@ agentsRoute.post("/:agentId/tasks", async (c) => {
       fail("VALIDATION_ERROR", "Invalid request body.", { issues: parsed.error.issues }),
       400,
     );
+  }
+
+  try {
+    await assertTaskVolume(executive.id);
+  } catch (err) {
+    if (err instanceof EntitlementError) {
+      return c.json(fail("ENTITLEMENT_LIMIT", err.message), 402);
+    }
+    throw err;
   }
 
   const [task] = await getDb()

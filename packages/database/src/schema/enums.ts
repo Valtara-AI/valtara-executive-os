@@ -45,3 +45,19 @@ export const delegateInvitationStatusEnum = pgEnum("delegate_invitation_status",
   "declined",
   "revoked",
 ]);
+
+// DL-ARCH-010: subscription tiers gate agent count, integration access,
+// delegate seats, and monthly task volume (see packages/billing/src/tiers.ts).
+export const subscriptionTierEnum = pgEnum("subscription_tier", ["starter", "pro", "enterprise"]);
+
+// Mirrors Stripe Subscription's own status values (a subset - Stripe has a
+// few more edge-case statuses like "unpaid"/"paused" not distinguished
+// here, all folded into "past_due"/"canceled" for VEX-OS's own gating
+// purposes since the entitlement outcome is the same either way).
+export const subscriptionStatusEnum = pgEnum("subscription_status", [
+  "trialing",
+  "active",
+  "past_due",
+  "canceled",
+  "incomplete",
+]);

@@ -58,6 +58,34 @@ describe.skipIf(!hasDb)("integrations routes", () => {
     return email;
   }
 
+  // DL-ARCH-010: /:provider/authorize is now entitlement-gated
+  // (assertIntegrationAllowed) - these tests exercise the OAuth flow
+  // itself, not billing, so give each test executive an active "pro"
+  // subscription (covers all four providers) rather than re-proving
+  // entitlement enforcement here too (that's packages/billing's own test
+  // suite). Creates the executive row directly since it wouldn't otherwise
+  // exist until the first authenticated API call auto-creates it.
+  async function seedActiveSubscription(email: string): Promise<void> {
+    const db = getDb();
+    let [executive] = await db
+      .select()
+      .from(schema.executives)
+      .where(eq(schema.executives.email, email));
+    if (!executive) {
+      [executive] = await db
+        .insert(schema.executives)
+        .values({ name: email, email, onboardingStatus: "not_started" })
+        .returning();
+    }
+    await db.insert(schema.subscriptions).values({
+      executiveId: executive!.id,
+      stripeCustomerId: "cus_test",
+      stripeSubscriptionId: `sub_test_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+      tier: "pro",
+      status: "active",
+    });
+  }
+
   it("GET / lists google, microsoft, slack, and pandadoc as not connected before any connection exists", async () => {
     const app = createApp();
     const token = await signToken({ email: freshEmail("list"), role: "Executive" });
@@ -77,7 +105,9 @@ describe.skipIf(!hasDb)("integrations routes", () => {
 
   it("GET /:provider/authorize returns a Google consent URL with PKCE and state params", async () => {
     const app = createApp();
-    const token = await signToken({ email: freshEmail("authorize"), role: "Executive" });
+    const email = freshEmail("authorize");
+    await seedActiveSubscription(email);
+    const token = await signToken({ email, role: "Executive" });
 
     const res = await app.request("/api/v1/integrations/google/authorize", {
       headers: { Authorization: `Bearer ${token}` },
@@ -92,7 +122,9 @@ describe.skipIf(!hasDb)("integrations routes", () => {
 
   it("GET /:provider/authorize returns a Microsoft consent URL with PKCE and state params", async () => {
     const app = createApp();
-    const token = await signToken({ email: freshEmail("ms-authorize"), role: "Executive" });
+    const email = freshEmail("ms-authorize");
+    await seedActiveSubscription(email);
+    const token = await signToken({ email, role: "Executive" });
 
     const res = await app.request("/api/v1/integrations/microsoft/authorize", {
       headers: { Authorization: `Bearer ${token}` },
@@ -109,7 +141,9 @@ describe.skipIf(!hasDb)("integrations routes", () => {
 
   it("GET /:provider/authorize returns a Slack consent URL with state, no PKCE params", async () => {
     const app = createApp();
-    const token = await signToken({ email: freshEmail("slack-authorize"), role: "Executive" });
+    const email = freshEmail("slack-authorize");
+    await seedActiveSubscription(email);
+    const token = await signToken({ email, role: "Executive" });
 
     const res = await app.request("/api/v1/integrations/slack/authorize", {
       headers: { Authorization: `Bearer ${token}` },
@@ -120,6 +154,39 @@ describe.skipIf(!hasDb)("integrations routes", () => {
     expect(url.origin + url.pathname).toBe("https://slack.com/oauth/v2/authorize");
     expect(url.searchParams.get("state")).toBeTruthy();
     expect(url.searchParams.get("code_challenge")).toBeNull();
+  });
+
+  it("returns 402 authorizing an integration with no active subscription", async () => {
+    const app = createApp();
+    const token = await signToken({ email: freshEmail("no-subscription"), role: "Executive" });
+    const res = await app.request("/api/v1/integrations/google/authorize", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(res.status).toBe(402);
+    expect((await jsonBody(res)).error?.code).toBe("ENTITLEMENT_LIMIT");
+  });
+
+  it("returns 402 authorizing PandaDoc on a starter-tier subscription (not in its allowlist)", async () => {
+    const app = createApp();
+    const email = freshEmail("starter-pandadoc");
+    const db = getDb();
+    const [executive] = await db
+      .insert(schema.executives)
+      .values({ name: email, email, onboardingStatus: "not_started" })
+      .returning();
+    await db.insert(schema.subscriptions).values({
+      executiveId: executive!.id,
+      stripeCustomerId: "cus_test",
+      stripeSubscriptionId: `sub_test_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+      tier: "starter",
+      status: "active",
+    });
+    const token = await signToken({ email, role: "Executive" });
+
+    const res = await app.request("/api/v1/integrations/pandadoc/authorize", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(res.status).toBe(402);
   });
 
   it("returns 400 for an unsupported provider", async () => {
@@ -136,6 +203,7 @@ describe.skipIf(!hasDb)("integrations routes", () => {
   it("full round trip: authorize -> callback connects, list reflects it, disconnect removes it", async () => {
     const app = createApp();
     const email = freshEmail("roundtrip");
+    await seedActiveSubscription(email);
     const token = await signToken({ email, role: "Executive" });
     const headers = { Authorization: `Bearer ${token}` };
 
@@ -195,6 +263,7 @@ describe.skipIf(!hasDb)("integrations routes", () => {
   it("full round trip for Microsoft: authorize -> callback connects, list reflects it, disconnect removes it", async () => {
     const app = createApp();
     const email = freshEmail("ms-roundtrip");
+    await seedActiveSubscription(email);
     const token = await signToken({ email, role: "Executive" });
     const headers = { Authorization: `Bearer ${token}` };
 
@@ -254,6 +323,7 @@ describe.skipIf(!hasDb)("integrations routes", () => {
   it("full round trip for Slack: authorize -> callback connects, list reflects it, disconnect removes it", async () => {
     const app = createApp();
     const email = freshEmail("slack-roundtrip");
+    await seedActiveSubscription(email);
     const token = await signToken({ email, role: "Executive" });
     const headers = { Authorization: `Bearer ${token}` };
 
@@ -311,7 +381,9 @@ describe.skipIf(!hasDb)("integrations routes", () => {
 
   it("GET /:provider/authorize returns a PandaDoc consent URL with state, no PKCE params", async () => {
     const app = createApp();
-    const token = await signToken({ email: freshEmail("pandadoc-authorize"), role: "Executive" });
+    const email = freshEmail("pandadoc-authorize");
+    await seedActiveSubscription(email);
+    const token = await signToken({ email, role: "Executive" });
 
     const res = await app.request("/api/v1/integrations/pandadoc/authorize", {
       headers: { Authorization: `Bearer ${token}` },
@@ -327,6 +399,7 @@ describe.skipIf(!hasDb)("integrations routes", () => {
   it("full round trip for PandaDoc: authorize -> callback connects, list reflects it, disconnect removes it", async () => {
     const app = createApp();
     const email = freshEmail("pandadoc-roundtrip");
+    await seedActiveSubscription(email);
     const token = await signToken({ email, role: "Executive" });
     const headers = { Authorization: `Bearer ${token}` };
 
