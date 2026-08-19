@@ -20,6 +20,7 @@
     "@vex-os/billing": "*",
     "@vex-os/database": "*",
     "@vex-os/integrations": "*",
+    "@vex-os/notifications": "*",
     "@vex-os/shared": "*",
     "bullmq": "^5.34.5",
     "drizzle-orm": "^0.45.2",

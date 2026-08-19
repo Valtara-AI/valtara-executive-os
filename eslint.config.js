@@ -49,6 +49,15 @@ const RESTRICTED_BILLING_SDK_IMPORTS = [
   },
 ];
 
+// Same pattern again for the notifications package's email provider.
+const RESTRICTED_NOTIFICATIONS_SDK_IMPORTS = [
+  {
+    group: ["resend", "resend/*"],
+    message:
+      "Do not import resend directly. Route all email sends through packages/notifications's email-client.ts.",
+  },
+];
+
 export default tseslint.config(
   {
     ignores: [
@@ -72,7 +81,13 @@ export default tseslint.config(
       ],
       "no-restricted-imports": [
         "error",
-        { patterns: [...RESTRICTED_LLM_SDK_IMPORTS, ...RESTRICTED_BILLING_SDK_IMPORTS] },
+        {
+          patterns: [
+            ...RESTRICTED_LLM_SDK_IMPORTS,
+            ...RESTRICTED_BILLING_SDK_IMPORTS,
+            ...RESTRICTED_NOTIFICATIONS_SDK_IMPORTS,
+          ],
+        },
       ],
     },
   },
@@ -91,6 +106,13 @@ export default tseslint.config(
     // shapes it dispatches on (a type-only import, but no-restricted-imports
     // doesn't distinguish type imports from value imports).
     files: ["packages/billing/src/stripe-client.ts", "packages/billing/src/webhook-handler.ts"],
+    rules: {
+      "no-restricted-imports": "off",
+    },
+  },
+  {
+    // The carve-out for Resend, same rationale.
+    files: ["packages/notifications/src/email-client.ts"],
     rules: {
       "no-restricted-imports": "off",
     },

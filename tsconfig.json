@@ -7,6 +7,7 @@
     { "path": "packages/audit" },
     { "path": "packages/integrations" },
     { "path": "packages/billing" },
+    { "path": "packages/notifications" },
     { "path": "apps/api" }
   ]
 }

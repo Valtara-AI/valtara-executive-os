@@ -19,7 +19,23 @@ import {
   type InferenceProvider,
 } from "@vex-os/ai-orchestrator";
 import { logTaskEvent } from "@vex-os/audit";
+import { sendHitlReviewNotification, sendTaskCompleteNotification } from "@vex-os/notifications";
 import type { HitlMode } from "@vex-os/shared";
+import { logger } from "../../logger.js";
+
+// Fire-and-forget by design: a failed notification (missing RESEND_API_KEY,
+// Resend rejecting the recipient, a transient network error) must never
+// fail the task itself - the task's real work (the LLM call, the
+// TaskOutput/HITLQueueItem rows) is already durably persisted by the time
+// either of these is called. Logged, not re-thrown.
+async function notifySafely(send: () => Promise<{ error: string | null }>): Promise<void> {
+  try {
+    const { error } = await send();
+    if (error) logger.warn({ err: error }, "Notification email failed to send");
+  } catch (err) {
+    logger.warn({ err: (err as Error).message }, "Notification email failed to send");
+  }
+}
 
 export class TaskNotFoundError extends Error {
   constructor(taskId: string) {
@@ -134,6 +150,14 @@ export async function executeTask(
       status: "pending",
       originalOutput: result.content,
     });
+    await notifySafely(() =>
+      sendHitlReviewNotification({
+        to: executive.email,
+        executiveName: executive.name,
+        agentName: agent.name,
+        taskPrompt: task.prompt,
+      }),
+    );
   }
 
   // Same guard as the initial transition, for the window where cancellation
@@ -164,6 +188,22 @@ export async function executeTask(
       tokensOutput: result.outputTokens,
     },
   });
+
+  // autonomous_report is the one mode with no HITL queue item and
+  // therefore no other signal the executive would ever see without
+  // opening the dashboard - this is that mode's "completion report
+  // delivered" (CLAUDE.md's own description of it).
+  if (agent.hitlMode === "autonomous_report") {
+    await notifySafely(() =>
+      sendTaskCompleteNotification({
+        to: executive.email,
+        executiveName: executive.name,
+        agentName: agent.name,
+        taskPrompt: task.prompt,
+        outputText: result.content,
+      }),
+    );
+  }
 }
 
 // HITL-05: checkpoint mode leaves the task paused pending executive action

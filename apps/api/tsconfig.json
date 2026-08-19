@@ -11,6 +11,7 @@
     { "path": "../../packages/ai-orchestrator" },
     { "path": "../../packages/audit" },
     { "path": "../../packages/integrations" },
-    { "path": "../../packages/billing" }
+    { "path": "../../packages/billing" },
+    { "path": "../../packages/notifications" }
   ]
 }

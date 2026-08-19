@@ -1,0 +1,15 @@
+{
+  "name": "@vex-os/notifications",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Transactional email notifications (HITL review requests, task completion) - closes the poll-the-dashboard gap",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "typecheck": "tsc --build"
+  },
+  "dependencies": {
+    "resend": "^6.20.0"
+  }
+}
