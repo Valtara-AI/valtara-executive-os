@@ -41,7 +41,7 @@ export default function AdminPage() {
   return (
     <main className="mx-auto flex min-h-screen max-w-2xl flex-col gap-6 p-6">
       <header className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Admin</h1>
+        <h1 className="font-display text-2xl font-semibold">Admin</h1>
         <div className="flex items-center gap-2">
           <ThemeToggle />
           <Button variant="outline" size="sm" onClick={() => void signOut()}>
@@ -59,7 +59,7 @@ export default function AdminPage() {
         </Card>
       ) : (
         <Card>
-          <h2 className="mb-4 text-lg font-medium">Compliance audit export</h2>
+          <h2 className="font-display mb-4 text-lg font-semibold">Compliance audit export</h2>
           <div className="flex flex-col gap-3">
             <label className="flex flex-col gap-1 text-xs text-muted-foreground">
               Format

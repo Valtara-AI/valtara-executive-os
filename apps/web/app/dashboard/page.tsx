@@ -29,7 +29,9 @@ import {
 } from "@/lib/integrations-api";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { cn } from "@/lib/cn";
 
 const PROVIDER_LABEL: Record<string, string> = {
   google: "Google (Gmail + Calendar)",
@@ -218,7 +220,7 @@ function DashboardContent() {
   return (
     <main className="mx-auto flex min-h-screen max-w-4xl flex-col gap-6 p-6">
       <header className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">
+        <h1 className="font-display text-2xl font-semibold">
           Good morning{session?.user?.name ? `, ${session.user.name}` : ""}.
         </h1>
         <div className="flex items-center gap-2">
@@ -242,12 +244,12 @@ function DashboardContent() {
 
       {invitationsQuery.data && invitationsQuery.data.length > 0 && (
         <Card>
-          <h2 className="mb-3 text-lg font-medium">Delegate invitations</h2>
+          <h2 className="font-display mb-3 text-lg font-semibold">Delegate invitations</h2>
           <div className="flex flex-col gap-2">
             {invitationsQuery.data.map((invitation) => (
               <div
                 key={invitation.id}
-                className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm"
+                className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm transition-colors hover:border-primary/40"
               >
                 <span>
                   You&rsquo;ve been invited to review agent outputs on someone&rsquo;s behalf.
@@ -276,7 +278,11 @@ function DashboardContent() {
       )}
 
       <section className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <StatTile label="HITL queue" value={summaryQuery.data?.hitlQueueCount} />
+        <StatTile
+          label="HITL queue"
+          value={summaryQuery.data?.hitlQueueCount}
+          needsAttention={Boolean(summaryQuery.data?.hitlQueueCount)}
+        />
         <StatTile label="Active tasks" value={summaryQuery.data?.activeTaskCount} />
         <StatTile label="Pending decisions" value={summaryQuery.data?.pendingDecisionCount} />
         <StatTile
@@ -286,7 +292,7 @@ function DashboardContent() {
       </section>
 
       <Card>
-        <h2 className="mb-2 text-lg font-medium">Morning brief</h2>
+        <h2 className="font-display mb-2 text-lg font-semibold">Morning brief</h2>
         {briefQuery.isLoading ? (
           <p className="text-sm text-muted-foreground">Loading…</p>
         ) : briefQuery.data ? (
@@ -299,7 +305,7 @@ function DashboardContent() {
       </Card>
 
       <Card>
-        <h2 className="mb-4 text-lg font-medium">HITL queue</h2>
+        <h2 className="font-display mb-4 text-lg font-semibold">HITL queue</h2>
         {hitlQuery.data && hitlQuery.data.length === 0 && (
           <p className="text-sm text-muted-foreground">Nothing waiting on you right now.</p>
         )}
@@ -320,7 +326,7 @@ function DashboardContent() {
       </Card>
 
       <Card>
-        <h2 className="mb-4 text-lg font-medium">History</h2>
+        <h2 className="font-display mb-4 text-lg font-semibold">History</h2>
         {hitlHistory.length === 0 && (
           <p className="text-sm text-muted-foreground">Nothing resolved yet.</p>
         )}
@@ -336,7 +342,7 @@ function DashboardContent() {
           rather than rendered broken. */}
       {role === "Executive" && (
         <Card>
-          <h2 className="mb-4 text-lg font-medium">Agents</h2>
+          <h2 className="font-display mb-4 text-lg font-semibold">Agents</h2>
           {agentsQuery.data && agentsQuery.data.length === 0 && (
             <p className="text-sm text-muted-foreground">
               No agents yet - they&apos;re created during onboarding.
@@ -360,7 +366,7 @@ function DashboardContent() {
       )}
 
       <Card>
-        <h2 className="mb-4 text-lg font-medium">Agent task activity</h2>
+        <h2 className="font-display mb-4 text-lg font-semibold">Agent task activity</h2>
         {tasksQuery.data && tasksQuery.data.length === 0 && (
           <p className="text-sm text-muted-foreground">No tasks yet.</p>
         )}
@@ -381,12 +387,12 @@ function DashboardContent() {
 
       {role === "Executive" && (
         <Card>
-          <h2 className="mb-4 text-lg font-medium">Integrations</h2>
+          <h2 className="font-display mb-4 text-lg font-semibold">Integrations</h2>
           <div className="flex flex-col gap-2">
             {integrationsQuery.data?.map((integration) => (
               <div
                 key={integration.provider}
-                className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm"
+                className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm transition-colors hover:border-primary/40"
               >
                 <span>{PROVIDER_LABEL[integration.provider] ?? integration.provider}</span>
                 {integration.connected ? (
@@ -416,10 +422,26 @@ function DashboardContent() {
   );
 }
 
-function StatTile({ label, value }: { label: string; value: number | undefined }) {
+function StatTile({
+  label,
+  value,
+  needsAttention,
+}: {
+  label: string;
+  value: number | undefined;
+  /** Executive Pulse-style signal (Branding/06-executive-command-center.md): a non-zero count here is something the executive should notice, not just a number. */
+  needsAttention?: boolean;
+}) {
   return (
     <Card className="text-center">
-      <div className="text-2xl font-semibold">{value ?? "–"}</div>
+      <div
+        className={cn(
+          "font-display text-2xl font-bold",
+          needsAttention ? "text-accent" : "text-foreground",
+        )}
+      >
+        {value ?? "–"}
+      </div>
       <div className="text-xs text-muted-foreground">{label}</div>
     </Card>
   );
@@ -502,9 +524,11 @@ const HITL_HISTORY_STATUS_LABEL: Record<string, string> = {
 
 function HitlHistoryRow({ item }: { item: HitlQueueItem }) {
   return (
-    <li className="rounded-md border border-border px-3 py-2 text-sm">
+    <li className="rounded-md border border-border px-3 py-2 text-sm transition-colors hover:border-primary/40">
       <div className="flex items-center justify-between">
-        <span className="font-medium">{HITL_HISTORY_STATUS_LABEL[item.status] ?? item.status}</span>
+        <Badge variant={item.status === "rejected" ? "outline" : "accent"}>
+          {HITL_HISTORY_STATUS_LABEL[item.status] ?? item.status}
+        </Badge>
         {item.actionedAt && (
           <span className="text-xs text-muted-foreground">
             {new Date(item.actionedAt).toLocaleString()}
@@ -555,7 +579,7 @@ function TaskRow({
   });
 
   return (
-    <li className="rounded-md border border-border text-sm">
+    <li className="rounded-md border border-border text-sm transition-colors hover:border-primary/40">
       <button
         type="button"
         className="flex w-full items-center justify-between px-3 py-2 text-left"
@@ -565,9 +589,12 @@ function TaskRow({
           <span className="font-medium">{agentName}</span> — {task.prompt.slice(0, 60)}
           {task.prompt.length > 60 ? "…" : ""}
         </span>
-        <span className="whitespace-nowrap text-xs text-muted-foreground">
+        <Badge
+          variant={task.status === "complete" ? "accent" : "outline"}
+          className="whitespace-nowrap"
+        >
           {TASK_STATUS_LABEL[task.status]}
-        </span>
+        </Badge>
       </button>
 
       {expanded && (
@@ -633,14 +660,12 @@ function AgentRow({
   const [taskPrompt, setTaskPrompt] = React.useState("");
 
   return (
-    <div className="rounded-md border border-border p-3">
+    <div className="rounded-md border border-border p-3 transition-colors hover:border-primary/40">
       <div className="flex items-center justify-between">
-        <div>
-          <span className="font-medium">{agent.name}</span>{" "}
-          <span className="text-xs text-muted-foreground">
-            {HITL_MODE_LABEL[agent.hitlMode]}
-            {agent.status === "archived" ? " · Archived" : ""}
-          </span>
+        <div className="flex items-center gap-2">
+          <span className="font-medium">{agent.name}</span>
+          <Badge variant="outline">{HITL_MODE_LABEL[agent.hitlMode]}</Badge>
+          {agent.status === "archived" && <Badge variant="outline">Archived</Badge>}
         </div>
         <Button size="sm" variant="outline" onClick={() => setManaging((v) => !v)}>
           {managing ? "Close" : "Manage"}

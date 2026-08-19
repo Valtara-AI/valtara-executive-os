@@ -98,7 +98,7 @@ export default function OnboardingPage() {
 
   return (
     <main className="mx-auto flex min-h-screen max-w-2xl flex-col gap-6 p-6">
-      <h1 className="text-2xl font-semibold">Let&rsquo;s set up your AI workforce</h1>
+      <h1 className="font-display text-2xl font-semibold">Let&rsquo;s set up your AI workforce</h1>
 
       {phase === "interviewing" && (
         <>
