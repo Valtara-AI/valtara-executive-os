@@ -53,9 +53,19 @@ export default function DashboardPage() {
 function DashboardContent() {
   const { data: session } = useSession();
   const accessToken = session?.accessToken;
+  const role = session?.user?.role;
   const queryClient = useQueryClient();
   const router = useRouter();
   const searchParams = useSearchParams();
+
+  // Every query below (dashboard/summary, briefs, hitl, tasks) requires
+  // Executive or Delegate (SEC-001 §3.2) - an Administrator gets a 403 from
+  // all of them, since their only real capability is the audit export at
+  // /admin. Redirect there instead of rendering a dashboard that would
+  // fail every request.
+  React.useEffect(() => {
+    if (role === "Administrator") router.replace("/admin");
+  }, [role, router]);
 
   // Feedback from routes/integrations.ts's callback redirect
   // (?integration=connected|error). Captured into state once on mount
@@ -99,10 +109,12 @@ function DashboardContent() {
     refetchInterval: 30_000,
   });
 
+  // Executive-only (SEC-001 §3.2) - a Delegate's identical request 403s, so
+  // this is disabled rather than fired-and-ignored for that role.
   const agentsQuery = useQuery({
     queryKey: ["agents"],
     queryFn: () => listAgents(accessToken!),
-    enabled: Boolean(accessToken),
+    enabled: Boolean(accessToken) && role === "Executive",
   });
 
   // Checked regardless of the current session's role: the many-to-many
@@ -122,10 +134,11 @@ function DashboardContent() {
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["pending-invitations"] }),
   });
 
+  // Executive-only (SEC-001 §3.2), same reasoning as agentsQuery above.
   const integrationsQuery = useQuery({
     queryKey: ["integrations"],
     queryFn: () => listIntegrations(accessToken!),
-    enabled: Boolean(accessToken),
+    enabled: Boolean(accessToken) && role === "Executive",
   });
   const connectMutation = useMutation({
     mutationFn: async (provider: string) => {
@@ -292,28 +305,33 @@ function DashboardContent() {
         </div>
       </Card>
 
-      <Card>
-        <h2 className="mb-4 text-lg font-medium">Agents</h2>
-        {agentsQuery.data && agentsQuery.data.length === 0 && (
-          <p className="text-sm text-muted-foreground">
-            No agents yet - they&apos;re created during onboarding.
-          </p>
-        )}
-        <div className="flex flex-col gap-3">
-          {agentsQuery.data?.map((agent) => (
-            <AgentRow
-              key={agent.id}
-              agent={agent}
-              onSave={(patch) => updateAgentMutation.mutate({ agentId: agent.id, patch })}
-              onArchive={() => archiveAgentMutation.mutate(agent.id)}
-              onAssignTask={(prompt) => assignTaskMutation.mutate({ agentId: agent.id, prompt })}
-              isSaving={updateAgentMutation.isPending}
-              isArchiving={archiveAgentMutation.isPending}
-              isAssigning={assignTaskMutation.isPending}
-            />
-          ))}
-        </div>
-      </Card>
+      {/* Agents/Integrations are Executive-only (SEC-001 §3.2) - a
+          Delegate's identical API calls 403, so these sections are hidden
+          rather than rendered broken. */}
+      {role === "Executive" && (
+        <Card>
+          <h2 className="mb-4 text-lg font-medium">Agents</h2>
+          {agentsQuery.data && agentsQuery.data.length === 0 && (
+            <p className="text-sm text-muted-foreground">
+              No agents yet - they&apos;re created during onboarding.
+            </p>
+          )}
+          <div className="flex flex-col gap-3">
+            {agentsQuery.data?.map((agent) => (
+              <AgentRow
+                key={agent.id}
+                agent={agent}
+                onSave={(patch) => updateAgentMutation.mutate({ agentId: agent.id, patch })}
+                onArchive={() => archiveAgentMutation.mutate(agent.id)}
+                onAssignTask={(prompt) => assignTaskMutation.mutate({ agentId: agent.id, prompt })}
+                isSaving={updateAgentMutation.isPending}
+                isArchiving={archiveAgentMutation.isPending}
+                isAssigning={assignTaskMutation.isPending}
+              />
+            ))}
+          </div>
+        </Card>
+      )}
 
       <Card>
         <h2 className="mb-4 text-lg font-medium">Agent task activity</h2>
@@ -327,6 +345,7 @@ function DashboardContent() {
               task={task}
               agentName={agentNameById.get(task.agentId) ?? "Agent"}
               accessToken={accessToken}
+              canCancel={role === "Executive"}
               onCancel={() => cancelTaskMutation.mutate(task.id)}
               isCancelling={cancelTaskMutation.isPending}
             />
@@ -334,37 +353,39 @@ function DashboardContent() {
         </ul>
       </Card>
 
-      <Card>
-        <h2 className="mb-4 text-lg font-medium">Integrations</h2>
-        <div className="flex flex-col gap-2">
-          {integrationsQuery.data?.map((integration) => (
-            <div
-              key={integration.provider}
-              className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm"
-            >
-              <span>{PROVIDER_LABEL[integration.provider] ?? integration.provider}</span>
-              {integration.connected ? (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={disconnectMutation.isPending}
-                  onClick={() => disconnectMutation.mutate(integration.provider)}
-                >
-                  Disconnect
-                </Button>
-              ) : (
-                <Button
-                  size="sm"
-                  disabled={connectMutation.isPending}
-                  onClick={() => connectMutation.mutate(integration.provider)}
-                >
-                  Connect
-                </Button>
-              )}
-            </div>
-          ))}
-        </div>
-      </Card>
+      {role === "Executive" && (
+        <Card>
+          <h2 className="mb-4 text-lg font-medium">Integrations</h2>
+          <div className="flex flex-col gap-2">
+            {integrationsQuery.data?.map((integration) => (
+              <div
+                key={integration.provider}
+                className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm"
+              >
+                <span>{PROVIDER_LABEL[integration.provider] ?? integration.provider}</span>
+                {integration.connected ? (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={disconnectMutation.isPending}
+                    onClick={() => disconnectMutation.mutate(integration.provider)}
+                  >
+                    Disconnect
+                  </Button>
+                ) : (
+                  <Button
+                    size="sm"
+                    disabled={connectMutation.isPending}
+                    onClick={() => connectMutation.mutate(integration.provider)}
+                  >
+                    Connect
+                  </Button>
+                )}
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
     </main>
   );
 }
@@ -462,12 +483,14 @@ function TaskRow({
   task,
   agentName,
   accessToken,
+  canCancel,
   onCancel,
   isCancelling,
 }: {
   task: Task;
   agentName: string;
   accessToken: string | undefined;
+  canCancel: boolean;
   onCancel: () => void;
   isCancelling: boolean;
 }) {
@@ -507,7 +530,7 @@ function TaskRow({
           ) : (
             <p className="mt-2 text-xs text-muted-foreground">No output yet.</p>
           )}
-          {CANCELLABLE_TASK_STATUSES.includes(task.status) && (
+          {canCancel && CANCELLABLE_TASK_STATUSES.includes(task.status) && (
             <Button
               size="sm"
               variant="outline"
