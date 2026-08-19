@@ -10,6 +10,7 @@
 import { and, eq, gte, inArray } from "drizzle-orm";
 import { getDb, schema } from "@vex-os/database";
 import { TIER_LIMITS, type SubscriptionTier, type TierLimits } from "./tiers.js";
+import { computeCostCents } from "./model-pricing.js";
 
 export class EntitlementError extends Error {
   constructor(message: string) {
@@ -23,7 +24,15 @@ const ZERO_LIMITS: TierLimits = {
   allowedIntegrations: [],
   maxDelegateSeats: 0,
   maxMonthlyTasks: 0,
+  maxMonthlyCostCents: 0,
 };
+
+function startOfCurrentMonthUtc(): Date {
+  const startOfMonth = new Date();
+  startOfMonth.setUTCDate(1);
+  startOfMonth.setUTCHours(0, 0, 0, 0);
+  return startOfMonth;
+}
 
 export interface EntitlementState {
   tier: SubscriptionTier | null;
@@ -98,20 +107,61 @@ export async function assertSeatLimit(executiveId: string): Promise<void> {
 export async function assertTaskVolume(executiveId: string): Promise<void> {
   const { limits } = await getEntitlements(executiveId);
   const db = getDb();
-  const startOfMonth = new Date();
-  startOfMonth.setUTCDate(1);
-  startOfMonth.setUTCHours(0, 0, 0, 0);
 
   const tasksThisMonth = await db
     .select({ id: schema.tasks.id })
     .from(schema.tasks)
     .where(
-      and(eq(schema.tasks.executiveId, executiveId), gte(schema.tasks.createdAt, startOfMonth)),
+      and(
+        eq(schema.tasks.executiveId, executiveId),
+        gte(schema.tasks.createdAt, startOfCurrentMonthUtc()),
+      ),
     );
 
   if (tasksThisMonth.length >= limits.maxMonthlyTasks) {
     throw new EntitlementError(
       `Monthly task limit reached (${limits.maxMonthlyTasks} on your current plan). Upgrade or wait until next month.`,
+    );
+  }
+}
+
+/**
+ * Hard cap on LLM spend (DL-ARCH-014) - distinct from assertTaskVolume's
+ * task *count* cap, since a handful of expensive tasks can burn far more
+ * than a per-task-count limit implies. Sums real cost from taskOutputs
+ * (which already records modelId/tokensInput/tokensOutput per task) for
+ * the current calendar month, computed via model-pricing.ts's published
+ * rates. Same enforcement point as the other assert* functions - called
+ * before a new task is created, not re-checked mid-execution.
+ */
+export async function assertCostBudget(executiveId: string): Promise<void> {
+  const { limits } = await getEntitlements(executiveId);
+  if (limits.maxMonthlyCostCents === Infinity) return;
+
+  const db = getDb();
+  const outputsThisMonth = await db
+    .select({
+      modelId: schema.taskOutputs.modelId,
+      tokensInput: schema.taskOutputs.tokensInput,
+      tokensOutput: schema.taskOutputs.tokensOutput,
+    })
+    .from(schema.taskOutputs)
+    .innerJoin(schema.tasks, eq(schema.taskOutputs.taskId, schema.tasks.id))
+    .where(
+      and(
+        eq(schema.tasks.executiveId, executiveId),
+        gte(schema.taskOutputs.createdAt, startOfCurrentMonthUtc()),
+      ),
+    );
+
+  const spentCents = outputsThisMonth.reduce(
+    (total, row) => total + computeCostCents(row.modelId, row.tokensInput, row.tokensOutput),
+    0,
+  );
+
+  if (spentCents >= limits.maxMonthlyCostCents) {
+    throw new EntitlementError(
+      `Monthly usage budget reached ($${(limits.maxMonthlyCostCents / 100).toFixed(2)} on your current plan). Upgrade or wait until next month.`,
     );
   }
 }

@@ -11,6 +11,13 @@ export interface TierLimits {
   allowedIntegrations: readonly string[];
   maxDelegateSeats: number;
   maxMonthlyTasks: number;
+  /**
+   * USD cents of LLM spend included per month (DL-ARCH-014). Hard cap, not
+   * metered overage - once reached, new tasks are rejected until the next
+   * calendar month. Starting figures, not a finalized pricing decision -
+   * tune against real usage once live traffic exists.
+   */
+  maxMonthlyCostCents: number;
 }
 
 // `Infinity` is a real, intentional value here (not a placeholder) -
@@ -22,18 +29,21 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     allowedIntegrations: ["google", "microsoft"],
     maxDelegateSeats: 1,
     maxMonthlyTasks: 200,
+    maxMonthlyCostCents: 2000, // $20.00
   },
   pro: {
     maxAgents: 10,
     allowedIntegrations: ["google", "microsoft", "slack", "pandadoc"],
     maxDelegateSeats: 5,
     maxMonthlyTasks: 2000,
+    maxMonthlyCostCents: 20000, // $200.00
   },
   enterprise: {
     maxAgents: Infinity,
     allowedIntegrations: ["google", "microsoft", "slack", "pandadoc"],
     maxDelegateSeats: Infinity,
     maxMonthlyTasks: Infinity,
+    maxMonthlyCostCents: Infinity,
   },
 };
 

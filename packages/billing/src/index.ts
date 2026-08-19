@@ -7,7 +7,9 @@ export {
   assertIntegrationAllowed,
   assertSeatLimit,
   assertTaskVolume,
+  assertCostBudget,
   EntitlementError,
   type EntitlementState,
 } from "./entitlements.js";
 export { TIER_LIMITS, TRIAL_PERIOD_DAYS, type SubscriptionTier, type TierLimits } from "./tiers.js";
+export { computeCostCents, MODEL_RATES, UnknownModelPricingError } from "./model-pricing.js";

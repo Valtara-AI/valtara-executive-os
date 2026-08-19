@@ -61,7 +61,13 @@ describe.skipIf(!hasDb)("billing routes", () => {
     expect(body.data?.entitlements).toEqual({
       tier: null,
       status: "none",
-      limits: { maxAgents: 0, allowedIntegrations: [], maxDelegateSeats: 0, maxMonthlyTasks: 0 },
+      limits: {
+        maxAgents: 0,
+        allowedIntegrations: [],
+        maxDelegateSeats: 0,
+        maxMonthlyTasks: 0,
+        maxMonthlyCostCents: 0,
+      },
     });
   });
 

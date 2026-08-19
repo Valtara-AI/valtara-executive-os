@@ -9,6 +9,7 @@ import { eq } from "drizzle-orm";
 import { getDb, schema } from "@vex-os/database";
 import {
   assertAgentLimit,
+  assertCostBudget,
   assertIntegrationAllowed,
   assertSeatLimit,
   EntitlementError,
@@ -23,6 +24,20 @@ describe.skipIf(!hasDb)("entitlements", () => {
   afterEach(async () => {
     const db = getDb();
     for (const id of cleanupExecutiveIds.splice(0)) {
+      const agentRows = await db
+        .select({ id: schema.agents.id })
+        .from(schema.agents)
+        .where(eq(schema.agents.executiveId, id));
+      for (const agent of agentRows) {
+        const taskRows = await db
+          .select({ id: schema.tasks.id })
+          .from(schema.tasks)
+          .where(eq(schema.tasks.agentId, agent.id));
+        for (const task of taskRows) {
+          await db.delete(schema.taskOutputs).where(eq(schema.taskOutputs.taskId, task.id));
+        }
+        await db.delete(schema.tasks).where(eq(schema.tasks.agentId, agent.id));
+      }
       await db.delete(schema.agents).where(eq(schema.agents.executiveId, id));
       await db.delete(schema.delegateLinks).where(eq(schema.delegateLinks.executiveId, id));
       await db.delete(schema.subscriptions).where(eq(schema.subscriptions.executiveId, id));
@@ -49,7 +64,13 @@ describe.skipIf(!hasDb)("entitlements", () => {
     expect(state).toEqual({
       tier: null,
       status: "none",
-      limits: { maxAgents: 0, allowedIntegrations: [], maxDelegateSeats: 0, maxMonthlyTasks: 0 },
+      limits: {
+        maxAgents: 0,
+        allowedIntegrations: [],
+        maxDelegateSeats: 0,
+        maxMonthlyTasks: 0,
+        maxMonthlyCostCents: 0,
+      },
     });
   });
 
@@ -110,5 +131,69 @@ describe.skipIf(!hasDb)("entitlements", () => {
     });
 
     await expect(assertSeatLimit(executive.id)).rejects.toThrow(EntitlementError);
+  });
+
+  it("assertCostBudget throws once this month's task-output spend reaches the tier's included budget", async () => {
+    const executive = await makeExecutive();
+    const db = getDb();
+    await db.insert(schema.subscriptions).values({
+      executiveId: executive.id,
+      stripeCustomerId: "cus_test",
+      stripeSubscriptionId: `sub_test_${Date.now()}`,
+      tier: "starter", // maxMonthlyCostCents: 2000 ($20.00)
+      status: "active",
+    });
+    const [agent] = await db
+      .insert(schema.agents)
+      .values({ executiveId: executive.id, name: "A", description: "d", responsibilities: ["r"] })
+      .returning();
+    const [task] = await db
+      .insert(schema.tasks)
+      .values({ agentId: agent!.id, executiveId: executive.id, prompt: "p", status: "complete" })
+      .returning();
+
+    // claude-sonnet-5: $0.002/1k input, $0.01/1k output (model-pricing.ts).
+    // 10,000,000 output tokens -> $10,000 -> comfortably over the $20 cap.
+    await db.insert(schema.taskOutputs).values({
+      taskId: task!.id,
+      modelProvider: "anthropic",
+      modelId: "claude-sonnet-5",
+      promptVersion: "v1",
+      outputText: "x",
+      tokensInput: 0,
+      tokensOutput: 10_000_000,
+      durationMs: 1,
+      hitlStatus: "approved",
+    });
+
+    await expect(assertCostBudget(executive.id)).rejects.toThrow(/Monthly usage budget reached/);
+  });
+
+  it("assertCostBudget resolves for an executive under budget", async () => {
+    const executive = await makeExecutive();
+    const db = getDb();
+    await db.insert(schema.subscriptions).values({
+      executiveId: executive.id,
+      stripeCustomerId: "cus_test",
+      stripeSubscriptionId: `sub_test_${Date.now()}`,
+      tier: "starter",
+      status: "active",
+    });
+
+    await expect(assertCostBudget(executive.id)).resolves.toBeUndefined();
+  });
+
+  it("assertCostBudget never throws for enterprise (unlimited budget)", async () => {
+    const executive = await makeExecutive();
+    const db = getDb();
+    await db.insert(schema.subscriptions).values({
+      executiveId: executive.id,
+      stripeCustomerId: "cus_test",
+      stripeSubscriptionId: `sub_test_${Date.now()}`,
+      tier: "enterprise",
+      status: "active",
+    });
+
+    await expect(assertCostBudget(executive.id)).resolves.toBeUndefined();
   });
 });

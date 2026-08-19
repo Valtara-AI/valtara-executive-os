@@ -13,7 +13,12 @@ import { Hono } from "hono";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { getDb, schema } from "@vex-os/database";
-import { assertAgentLimit, assertTaskVolume, EntitlementError } from "@vex-os/billing";
+import {
+  assertAgentLimit,
+  assertCostBudget,
+  assertTaskVolume,
+  EntitlementError,
+} from "@vex-os/billing";
 import { HITL_MODES, fail, ok, type HitlMode } from "@vex-os/shared";
 import type { AuthedVariables } from "../middleware/jwt.js";
 import { requireRole } from "../middleware/rbac.js";
@@ -151,6 +156,7 @@ agentsRoute.post("/:agentId/tasks", async (c) => {
 
   try {
     await assertTaskVolume(executive.id);
+    await assertCostBudget(executive.id);
   } catch (err) {
     if (err instanceof EntitlementError) {
       return c.json(fail("ENTITLEMENT_LIMIT", err.message), 402);
