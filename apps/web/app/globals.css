@@ -2,29 +2,61 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Light palette (default). Dark palette overrides these under
-   [data-theme="dark"] (SAD §4.1: "theme toggled via data-theme attribute
-   on root element"). FR-DB-06 is Sprint 3 scope for the toggle UI itself,
-   but the token structure is scaffolded now so components never hardcode
-   colors. */
+/* DL-PROD-003 / Phase A brand pass: values below are the vexOS brand
+   palette (Branding/02-core-visual-system.md), converted from the brand
+   system's hex values to this file's existing raw-HSL-triplet convention.
+   Token NAMES are unchanged from the original scaffold (background/
+   foreground/border/primary/muted, +accent/+surface added this pass) so
+   nothing already consuming bg-primary/text-muted-foreground/etc. needs to
+   change - only the values moved to the real brand colors.
+
+   Source hex, for reference (see Branding/02-core-visual-system.md for the
+   full palette and each color's documented "primary use"):
+     Vex Midnight       #020A28   Executive Navy   #061643
+     Vex Blue           #064DFF   Orbit Blue       #008CFF
+     Intelligence Cyan  #00DDF2   Violet Pulse     #6A16FF
+     Cloud White        #F7FAFF   Slate            #66718C */
 :root {
-  --background: 0 0% 100%;
-  --foreground: 240 10% 4%;
-  --border: 240 6% 90%;
-  --primary: 243 75% 59%;
-  --primary-foreground: 0 0% 100%;
-  --muted: 240 5% 96%;
-  --muted-foreground: 240 4% 46%;
+  --background: 218 100% 98%; /* Cloud White */
+  --foreground: 227 90% 8%; /* Vex Midnight */
+  --border: 224 30% 88%;
+  --primary: 223 100% 51%; /* Vex Blue - "primary actions" per brand system */
+  --primary-foreground: 218 100% 98%; /* Cloud White */
+  --muted: 224 30% 95%;
+  --muted-foreground: 223 16% 47%; /* Slate */
+  --accent: 185 100% 47%; /* Intelligence Cyan - "AI/system signals" */
+  --accent-foreground: 227 90% 8%; /* Vex Midnight */
+  --surface: 224 40% 97%; /* one step off --background, for section alternation */
 }
 
 [data-theme="dark"] {
-  --background: 240 10% 4%;
-  --foreground: 0 0% 98%;
-  --border: 240 6% 20%;
-  --primary: 243 75% 65%;
-  --primary-foreground: 240 10% 4%;
-  --muted: 240 5% 12%;
-  --muted-foreground: 240 4% 64%;
+  --background: 227 90% 8%; /* Vex Midnight - the brand system's primary dark background */
+  --foreground: 218 100% 98%; /* Cloud White */
+  --border: 224 40% 20%;
+  --primary: 207 100% 50%; /* Orbit Blue - brighter than Vex Blue for dark-bg contrast */
+  --primary-foreground: 227 90% 8%; /* Vex Midnight */
+  --muted: 224 84% 14%; /* Executive Navy - "cards, navigation, dashboards" per brand system */
+  --muted-foreground: 223 20% 62%; /* Slate, lightened for dark-mode legibility */
+  --accent: 185 100% 47%; /* Intelligence Cyan - same both modes, bright enough for either */
+  --accent-foreground: 227 90% 8%; /* Vex Midnight */
+  --surface: 226 70% 11%; /* between --background and --muted */
+}
+
+/* The "vexOS Intelligence Gradient" (Branding/02-core-visual-system.md):
+   use selectively - the logo, AI/HITL states, hero backgrounds, premium
+   interactions - never as a default UI background. Not a Tailwind color
+   token (gradients aren't single colors); reference directly via
+   `background-image: var(--intelligence-gradient)` or an arbitrary
+   Tailwind value like `bg-[image:var(--intelligence-gradient)]`. */
+:root,
+[data-theme="dark"] {
+  --intelligence-gradient: linear-gradient(
+    135deg,
+    hsl(185 100% 47%),
+    hsl(207 100% 50%),
+    hsl(223 100% 51%),
+    hsl(262 100% 54%)
+  );
 }
 
 body {

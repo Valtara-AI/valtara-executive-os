@@ -7,7 +7,9 @@ import { create } from "zustand";
 
 export type Theme = "light" | "dark";
 
-const STORAGE_KEY = "vex-os-theme";
+// Exported so layout.tsx's blocking inline theme-flash-prevention script
+// (Phase A) reads the same key rather than defining it a second time.
+export const STORAGE_KEY = "vex-os-theme";
 
 function applyThemeToDocument(theme: Theme) {
   document.documentElement.setAttribute("data-theme", theme);
