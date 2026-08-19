@@ -6,19 +6,19 @@
 
 VEX-OS-LGL-004 · Version 1.0 (Draft) · August 2026
 
-| Document ID    | VEX-OS-LGL-004                                                                                                                                                                                                                                                                                                                                                  |
-| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Version        | 1.0 — **Draft, not yet published**                                                                                                                                                                                                                                                                                                                              |
-| Status         | **Requires qualified legal counsel review before publication.** Content reflects what the application actually sets today (confirmed against `apps/web` source, not assumed) — must be re-verified whenever a marketing site, analytics, or advertising integration is added, since none of those exist yet and this policy would need to expand to cover them. |
-| Owner          | Francis Ogbogu — Chief AI Officer, Valtara AI                                                                                                                                                                                                                                                                                                                   |
-| Depends On     | VEX-OS-LGL-002 (Privacy Policy)                                                                                                                                                                                                                                                                                                                                 |
-| Classification | Public (once approved) — Draft is Confidential until then                                                                                                                                                                                                                                                                                                       |
+| Document ID    | VEX-OS-LGL-004                                                                                                                                                                                                                                                                                                                                                     |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Version        | 1.0 — **Draft, not yet published**                                                                                                                                                                                                                                                                                                                                 |
+| Status         | **Requires qualified legal counsel review before publication.** Content reflects what the application actually sets today (confirmed against `apps/web` source, not assumed) — re-verified as of the vexOS marketing landing page's launch (no new cookies, no analytics), and must be re-checked again whenever analytics or an advertising integration is added. |
+| Owner          | Francis Ogbogu — Chief AI Officer, Valtara AI                                                                                                                                                                                                                                                                                                                      |
+| Depends On     | VEX-OS-LGL-002 (Privacy Policy)                                                                                                                                                                                                                                                                                                                                    |
+| Classification | Public (once approved) — Draft is Confidential until then                                                                                                                                                                                                                                                                                                          |
 
 ---
 
 ## 1. What This Policy Covers
 
-This policy explains the cookies and similar local-storage technologies that Valtara Executive OS ("**VEX-OS**") uses when you sign in and use the product at its application domain. It does not yet cover a marketing website, since VEX-OS does not currently have one — this policy will be revised when that exists.
+This policy explains the cookies and similar local-storage technologies that Valtara Executive OS ("**VEX-OS**") uses across the application, including the public marketing pages (e.g. the vexOS landing page at `/`) and when you sign in and use the product. The marketing pages set no cookies of their own beyond the same strictly necessary authentication cookies listed below - no analytics or tracking cookies are used anywhere on the site today.
 
 ## 2. Cookies We Use
 
@@ -46,7 +46,7 @@ Because VEX-OS's cookies are strictly necessary for sign-in, blocking them in yo
 
 ## 6. Changes to This Policy
 
-If VEX-OS later adds analytics, a marketing site, or any non-essential cookie, this policy will be updated first and a consent mechanism will be added before any such cookie is set — nothing beyond the strictly-necessary cookies above is used today.
+If VEX-OS later adds analytics or any non-essential cookie, this policy will be updated first and a consent mechanism will be added before any such cookie is set — nothing beyond the strictly-necessary cookies above is used today, including on the marketing pages.
 
 ## 7. Contact
 

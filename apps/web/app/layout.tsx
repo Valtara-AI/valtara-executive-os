@@ -58,6 +58,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
       <body>
+        {/* Only rendered as active CSS when JS never runs at all (browsers
+            skip <noscript> contents once JS is enabled) - guarantees
+            components/marketing/reveal.tsx's scroll-in sections are never
+            permanently blank for a client that can't run the
+            IntersectionObserver that would otherwise reveal them. */}
+        <noscript>
+          <style>{`.reveal-pending { opacity: 1 !important; transform: none !important; }`}</style>
+        </noscript>
         <Providers>{children}</Providers>
       </body>
     </html>
