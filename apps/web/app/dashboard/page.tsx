@@ -173,6 +173,7 @@ function DashboardContent() {
 
   function invalidateHitlAndSummary() {
     void queryClient.invalidateQueries({ queryKey: ["hitl-queue"] });
+    void queryClient.invalidateQueries({ queryKey: ["hitl-history"] });
     void queryClient.invalidateQueries({ queryKey: ["dashboard-summary"] });
   }
 
