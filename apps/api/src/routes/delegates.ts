@@ -7,9 +7,9 @@
 import { Hono, type Context } from "hono";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
-import { getDb, schema } from "@vex-os/database";
-import { assertSeatLimit, EntitlementError } from "@vex-os/billing";
-import { fail, ok } from "@vex-os/shared";
+import { getDb, schema } from "@nyxor/database";
+import { assertSeatLimit, EntitlementError } from "@nyxor/billing";
+import { fail, ok } from "@nyxor/shared";
 import type { AuthedVariables } from "../middleware/jwt.js";
 import { requireRole } from "../middleware/rbac.js";
 import { resolveExecutive } from "../domains/onboarding/resolve-executive.js";

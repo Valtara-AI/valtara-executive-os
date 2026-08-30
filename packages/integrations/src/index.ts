@@ -56,3 +56,14 @@ export {
   completePandaDocConnection,
 } from "./pandadoc/pandadoc-connection.js";
 export { InsufficientScopeError as PandaDocInsufficientScopeError } from "./pandadoc/authenticated-fetch.js";
+export { fetchWithBackoff } from "./http-retry.js";
+// Deliberately plain function/type exports, not IntegrationAdapter-shaped -
+// these are single-API-key platform integrations (market data, news), not
+// per-executive OAuth. See each client.ts's file header for why.
+export { getQuotes } from "./market-data/client.js";
+export type { Quote } from "./market-data/types.js";
+export { getHeadlines } from "./news/client.js";
+export type { GetHeadlinesParams } from "./news/client.js";
+export type { Headline } from "./news/types.js";
+export { transcribeAudio } from "./speech-to-text/client.js";
+export { uploadRecording, getSignedPlaybackUrl } from "./audio-storage/client.js";

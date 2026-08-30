@@ -13,16 +13,16 @@
 //
 // "Triggers downstream action" (HITL-02) is honestly scoped to what's
 // built so far: no real external integrations exist yet (Gmail/Slack/etc.
-// are Sprint 4+), so approving an item finalizes it within VEX-OS (marks
+// are Sprint 4+), so approving an item finalizes it within NYXOR (marks
 // the TaskOutput approved, audit-logs it) rather than actually sending or
 // posting anything anywhere.
 
 import { Hono } from "hono";
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
-import { getDb, schema } from "@vex-os/database";
-import { fail, ok, type JwtPayload } from "@vex-os/shared";
-import { logHitlEvent } from "@vex-os/audit";
+import { getDb, schema } from "@nyxor/database";
+import { fail, ok, type JwtPayload } from "@nyxor/shared";
+import { logHitlEvent } from "@nyxor/audit";
 import type { AuthedVariables } from "../middleware/jwt.js";
 import { requireRole } from "../middleware/rbac.js";
 import { resolveExecutive } from "../domains/onboarding/resolve-executive.js";

@@ -92,13 +92,13 @@ jobs:
       postgres:
         image: pgvector/pgvector:pg15
         env:
-          POSTGRES_DB: vexos
-          POSTGRES_USER: vexos
-          POSTGRES_PASSWORD: vexos_ci
+          POSTGRES_DB: nyxor
+          POSTGRES_USER: nyxor
+          POSTGRES_PASSWORD: nyxor_ci
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U vexos -d vexos"
+          --health-cmd "pg_isready -U nyxor -d nyxor"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
@@ -112,7 +112,7 @@ jobs:
           --health-timeout 5s
           --health-retries 10
     env:
-      # DL-SEC-004: DATABASE_URL is the restricted vexos_app role the test
+      # DL-SEC-004: DATABASE_URL is the restricted nyxor_app role the test
       # suite actually runs against (provisioned by `npm run db:migrate`
       # below, via DATABASE_MIGRATION_URL - the bootstrap role Docker's
       # official postgres image always creates as a superuser). Using the
@@ -120,9 +120,9 @@ jobs:
       # is exactly the setup that let audit_log_entries' RLS-based
       # immutability guarantee go unenforced under CI's own connection;
       # see packages/database/src/__tests__/audit-log-immutability.test.ts.
-      DATABASE_URL: postgresql://vexos_app:vexos_app_ci@localhost:5432/vexos
-      DATABASE_MIGRATION_URL: postgresql://vexos:vexos_ci@localhost:5432/vexos
-      DB_APP_ROLE_PASSWORD: vexos_app_ci
+      DATABASE_URL: postgresql://nyxor_app:nyxor_app_ci@localhost:5432/nyxor
+      DATABASE_MIGRATION_URL: postgresql://nyxor:nyxor_ci@localhost:5432/nyxor
+      DB_APP_ROLE_PASSWORD: nyxor_app_ci
       REDIS_URL: redis://localhost:6379
       # Not real secrets - a throwaway AES key for a throwaway CI database,
       # and dummy OAuth client values that only need to be non-empty
@@ -154,8 +154,8 @@ jobs:
       - run: npm ci
       # Workspace packages' package.json "main"/"types" point at dist/, not
       # src/ (needed so a plain `node dist/index.js` in the production
-      # Docker image can resolve @vex-os/* without a TS runtime) - so
-      # cross-package imports (e.g. apps/api importing @vex-os/database)
+      # Docker image can resolve @nyxor/* without a TS runtime) - so
+      # cross-package imports (e.g. apps/api importing @nyxor/database)
       # only resolve once dist/ actually exists. dist/ is gitignored, so
       # every fresh checkout - this one included - needs a build first.
       # `tsc --build` (not `npm run build`) deliberately skips apps/web's

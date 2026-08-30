@@ -1,5 +1,5 @@
 // Stripe's hosted Customer Portal - self-serve plan changes, payment method
-// updates, and cancellation, without VEX-OS needing to build any of that
+// updates, and cancellation, without NYXOR needing to build any of that
 // UI itself.
 
 import { getStripeClient } from "./stripe-client.js";

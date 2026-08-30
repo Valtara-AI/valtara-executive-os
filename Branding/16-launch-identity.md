@@ -4,7 +4,7 @@ A strong launch campaign could center around:
 
 > **RUN YOUR COMPANY. NOT YOUR CHAOS.**
 
-**Supporting line**: Meet vexOS — the Executive Operating System built for leaders who operate at scale.
+**Supporting line**: Meet Nyxor — the Executive Operating System built for leaders who operate at scale.
 
 ## Secondary campaign statements
 

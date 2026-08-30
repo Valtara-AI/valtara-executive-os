@@ -18,5 +18,5 @@ export function getEmailClient(): Resend {
 }
 
 export function getFromAddress(): string {
-  return process.env.NOTIFICATIONS_FROM_ADDRESS ?? "VEX-OS <notifications@vex-os.example>";
+  return process.env.NOTIFICATIONS_FROM_ADDRESS ?? "NYXOR <notifications@nyxor.example>";
 }

@@ -12,7 +12,7 @@
 // past API version and an easy mistake to get wrong silently.
 
 import { eq } from "drizzle-orm";
-import { getDb, schema } from "@vex-os/database";
+import { getDb, schema } from "@nyxor/database";
 import type Stripe from "stripe";
 import { getStripeClient } from "./stripe-client.js";
 import { tierForPriceId } from "./tiers.js";
@@ -26,7 +26,7 @@ function toDate(unixSeconds: number | null | undefined): Date | null {
 // "past_due" since the entitlement outcome (no active paid access) is the
 // same either way. "incomplete_expired" folds to "canceled" for the same
 // reason.
-function toVexStatus(
+function toNyxorStatus(
   stripeStatus: Stripe.Subscription.Status,
 ): (typeof schema.subscriptions.$inferInsert)["status"] {
   switch (stripeStatus) {
@@ -63,7 +63,7 @@ async function upsertFromSubscription(
       typeof subscription.customer === "string" ? subscription.customer : subscription.customer.id,
     stripeSubscriptionId: subscription.id,
     tier: tierForPriceId(priceId),
-    status: toVexStatus(subscription.status),
+    status: toNyxorStatus(subscription.status),
     trialEndsAt: toDate(subscription.trial_end),
     currentPeriodEnd: toDate(subscription.items.data[0]?.current_period_end),
     updatedAt: new Date(),

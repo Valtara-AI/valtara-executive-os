@@ -7,8 +7,8 @@
 
 import { Hono } from "hono";
 import { and, desc, eq, inArray } from "drizzle-orm";
-import { getDb, schema } from "@vex-os/database";
-import { fail, ok } from "@vex-os/shared";
+import { getDb, schema } from "@nyxor/database";
+import { fail, ok } from "@nyxor/shared";
 import type { AuthedVariables } from "../middleware/jwt.js";
 import { requireRole } from "../middleware/rbac.js";
 import { resolveExecutive } from "../domains/onboarding/resolve-executive.js";

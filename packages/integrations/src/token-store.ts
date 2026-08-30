@@ -5,7 +5,7 @@
 // each adapter has to remember to do correctly on its own.
 
 import { and, eq } from "drizzle-orm";
-import { getDb, schema, encryptField, decryptField } from "@vex-os/database";
+import { getDb, schema, encryptField, decryptField } from "@nyxor/database";
 import type { OAuthTokenSet } from "./types.js";
 
 export async function saveTokens(

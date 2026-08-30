@@ -4,7 +4,7 @@ Name the design system: **VEXION**
 
 ## UI philosophy
 
-Dense intelligence, low cognitive load. Rather than filling the screen with widgets, vexOS should progressively reveal information based on executive relevance.
+Dense intelligence, low cognitive load. Rather than filling the screen with widgets, Nyxor should progressively reveal information based on executive relevance.
 
 ## Core primitives
 

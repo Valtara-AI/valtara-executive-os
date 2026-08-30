@@ -7,7 +7,7 @@ import type { TierDisplay } from "./pricing-display";
 export function PricingTierCard({ tier }: { tier: TierDisplay }) {
   const ctaHref =
     tier.ctaLabel === "Contact us"
-      ? "mailto:fcogbogu@gmail.com?subject=vexOS%20Enterprise%20Inquiry"
+      ? "mailto:fcogbogu@gmail.com?subject=Nyxor%20Enterprise%20Inquiry"
       : "/api/auth/signin";
 
   return (

@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { ok } from "@vex-os/shared";
+import { ok } from "@nyxor/shared";
 
 export const healthRoute = new Hono();
 

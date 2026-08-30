@@ -1,10 +1,10 @@
 # Positioning & Brand Promise
 
-The attached vexOS identity already establishes a strong direction: **deep executive navy + electric blue + cyan + violet**, with the orbital "V" suggesting intelligence, systems, connectivity, orchestration, and continuous motion.
+The attached Nyxor identity already establishes a strong direction: **deep executive navy + electric blue + cyan + violet**, with the orbital "V" suggesting intelligence, systems, connectivity, orchestration, and continuous motion.
 
 ## Positioning
 
-**vexOS — The Executive Operating System**
+**Nyxor — The Executive Operating System**
 
 ## Brand promise
 

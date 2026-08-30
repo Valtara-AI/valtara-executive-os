@@ -17,13 +17,13 @@ const plexMono = IBM_Plex_Mono({
   variable: "--font-plex-mono",
 });
 
-// DL-PROD-003: "vexOS" is the customer-facing brand name (matches the
-// provided logo's own typography); "VEX-OS" stays the internal engineering
+// DL-PROD-003: "Nyxor" is the customer-facing brand name (matches the
+// provided logo's own typography); "NYXOR" stays the internal engineering
 // identifier (package names, doc IDs) and is unaffected by this.
 export const metadata: Metadata = {
-  title: "vexOS — Smarter Systems. Bolder Possibilities.",
+  title: "Nyxor — Smarter Systems. Bolder Possibilities.",
   description:
-    "vexOS is the Executive Operating System — AI agents, governed by human approval on every action, built for how executives actually work.",
+    "Nyxor is the Executive Operating System — AI agents, governed by human approval on every action, built for how executives actually work.",
 };
 
 // Phase A theme-flash fix: the toggle (store/theme-store.ts) applies
@@ -53,7 +53,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       suppressHydrationWarning
     >
       {/* No manual favicon <link> - Next.js's file-convention icon
-          (app/icon.png) auto-injects the right <link rel="icon"> tag. */}
+          (app/icon.png) auto-injects the right <link rel="icon"> tag.
+          DL-PROD-005: same source-derived Nyxor mark as components/brand/
+          logo.tsx's "mark" variant - see that file for asset provenance. */}
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>

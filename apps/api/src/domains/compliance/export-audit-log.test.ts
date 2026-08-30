@@ -11,7 +11,7 @@
 
 import { randomUUID } from "node:crypto";
 import { describe, expect, it } from "vitest";
-import { AuditLogger } from "@vex-os/audit";
+import { AuditLogger } from "@nyxor/audit";
 import {
   queryAuditLogForExport,
   serializeForCsvExport,

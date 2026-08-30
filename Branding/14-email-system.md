@@ -12,7 +12,7 @@ Three families:
 
 ## Header
 
-vexOS logo → **EXECUTIVE BRIEF**
+Nyxor logo → **EXECUTIVE BRIEF**
 
 Email should remain extremely scannable: `3 priorities · 2 decisions · 1 risk`, then short sections with direct actions.
 

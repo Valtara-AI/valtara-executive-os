@@ -1,6 +1,6 @@
 # 6. Executive Command Center
 
-This should become vexOS's signature screen.
+This should become Nyxor's signature screen.
 
 ## Example hierarchy
 
@@ -21,7 +21,7 @@ Then:
 
 At the top: **EXECUTIVE PULSE — 84**
 
-Rather than simply reporting activity, vexOS should continuously answer: **What needs my attention now?**
+Rather than simply reporting activity, Nyxor should continuously answer: **What needs my attention now?**
 
 ---
 

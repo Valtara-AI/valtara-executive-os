@@ -1,10 +1,10 @@
-# vexOS Brand System
+# Nyxor Brand System
 
 Source: shared ChatGPT conversation, https://chatgpt.com/s/t_6a85b7e5ab9081918fb605db728f9043 (fetched and digested 2026-08-19). This is a full brand-identity system built around the logo the CAO provided (dark "Midnight" background, orbital "V" mark, blue → cyan → violet gradient).
 
 This folder holds the system broken out by section, matching the source document's own structure.
 
-**Naming — resolved (DL-PROD-003)**: this system refers to the product as **vexOS** / **VEX** throughout (lowercase v, capital OS). That's now the adopted customer-facing brand name. The codebase's internal identifiers (**VEX-OS**, hyphenated — npm packages, doc IDs, repo name) and the legal entity/product name (**Valtara Executive OS**, used only in `docs/06-legal/*`) are unchanged — three names for three audiences, not a rename. See `20-complete-brand-architecture.md` for the full reasoning.
+**Naming — resolved (DL-PROD-005, supersedes DL-PROD-003)**: this system refers to the product as **Nyxor** everywhere — logo, marketing copy, internal identifiers (npm packages, doc IDs), and the legal entity/product name in `docs/06-legal/*`. DL-PROD-003's original "three names for three audiences" (vexOS / VEX-OS / Valtara Executive OS) is retired: it was a workable compromise for a cosmetic naming mismatch, not for an actual trademark conflict (Vexos Corporation holds a registered US mark on "VEXOS"). One name, no split. See `20-complete-brand-architecture.md` for the full reasoning, and `docs/04-build-governance/VEX-OS-DL-001-Decision-Log.md`'s DL-PROD-005 entry for the conflict details. Note: the bare "VEX" AI-persona name, "VEXION" design-system name, and "Vex Glyph" icon family below are still unadopted reference material (see line 42) and still carry the retired root — they weren't touched by this rename and need their own naming pass before ever being adopted.
 
 ## Contents
 
@@ -43,4 +43,27 @@ Everything else (Command Center redesign, AI assistant "VEX" persona, mobile/PWA
 
 ## Logo asset
 
-Saved at `apps/web/public/vexos-logo.png` (1536×1024 PNG, the "Primary Horizontal Lockup" per `03-logo-architecture.md`). This is the only logo family member that exists today — reversed/monochrome variants, the standalone V mark, favicon, app icon, and motion logo (all listed in `03-logo-architecture.md`) still need to be derived from it. In particular, this file is a wide lockup with a lot of negative space around the mark - not suitable to use directly as a favicon at 16–32px; it needs a cropped/simplified version before that works legibly.
+DL-PROD-005: replaced the original vexOS-branded lockup with a real Nyxor
+lockup (orbital "N," not "V" - the mark's letter changed with the rebrand,
+not just its color/wordmark). Two source renders live here:
+`nyxor-logo-source-light-bg.png` (1672×941, dark-navy wordmark, designed
+for light surfaces) and `nyxor-logo-source-dark-bg.png` (2172×724, blue
+wordmark, designed for dark surfaces) - a deliberate light/dark pair, not
+one image recolored.
+
+Derived, production assets (chroma-keyed to transparency, cropped tight)
+live in `apps/web/public/`: `nyxor-logo-light.png` and `nyxor-logo-dark.png`
+(the two "full" lockups, theme-swapped via `components/brand/logo.tsx`),
+plus `nyxor-mark.png` (the standalone orbital N, cropped from the dark-bg
+source - its gradient is consistent between both sources so one crop
+serves both themes) also used for `apps/web/app/icon.png`'s favicon.
+Verified directly at real display size (16-32px) before shipping - unlike
+this section's prior claim about the old lockup, this isn't an assumption.
+
+One non-obvious pitfall worth recording: Next.js's `next/image` optimizer
+re-encoded these as 8-bit indexed/palette PNGs by default, which visibly
+dithers/bands a smooth gradient at small sizes - looked identical to a
+"detail doesn't survive downscaling" problem but was actually a re-encoding
+bug. Fixed with the `unoptimized` prop in `logo.tsx`, not by simplifying
+the art. Reversed/monochrome variants, app icon (PWA), and a motion logo
+are still unbuilt.

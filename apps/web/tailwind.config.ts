@@ -22,7 +22,7 @@ const config: Config = {
           DEFAULT: "hsl(var(--muted))",
           foreground: "hsl(var(--muted-foreground))",
         },
-        // DL-PROD-003 / Phase A: vexOS brand palette additions.
+        // DL-PROD-003 / Phase A: Nyxor brand palette additions.
         accent: {
           DEFAULT: "hsl(var(--accent))",
           foreground: "hsl(var(--accent-foreground))",

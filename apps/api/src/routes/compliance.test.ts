@@ -12,8 +12,8 @@
 import { randomUUID } from "node:crypto";
 import { beforeAll, describe, expect, it } from "vitest";
 import { desc, eq } from "drizzle-orm";
-import { getDb, schema } from "@vex-os/database";
-import { AuditLogger } from "@vex-os/audit";
+import { getDb, schema } from "@nyxor/database";
+import { AuditLogger } from "@nyxor/audit";
 import { createTestJwtSigner } from "../test-utils/jwt.js";
 
 const hasDb = Boolean(process.env.DATABASE_URL);

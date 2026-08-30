@@ -20,7 +20,7 @@ export function IntegrationsShowcase() {
             Works where you already work
           </h2>
           <p className="mt-4 text-muted-foreground">
-            vexOS requests only the access each agent actually needs — never a bulk download of your
+            Nyxor requests only the access each agent actually needs — never a bulk download of your
             mailbox or calendar history.
           </p>
         </Reveal>

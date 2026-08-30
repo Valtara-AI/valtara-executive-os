@@ -3,7 +3,7 @@
 // mocking the domain layer entirely.
 
 import { SignJWT, exportPKCS8, exportSPKI, generateKeyPair } from "jose";
-import type { JwtPayload, Role } from "@vex-os/shared";
+import type { JwtPayload, Role } from "@nyxor/shared";
 
 export async function createTestJwtSigner() {
   const { publicKey, privateKey } = await generateKeyPair("RS256");

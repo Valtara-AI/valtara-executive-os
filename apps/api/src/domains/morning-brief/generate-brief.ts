@@ -8,13 +8,9 @@
 // separate section per provider.
 
 import { and, desc, eq, gte, inArray } from "drizzle-orm";
-import { getDb, schema } from "@vex-os/database";
-import {
-  getInferenceProvider,
-  renderPrompt,
-  type InferenceProvider,
-} from "@vex-os/ai-orchestrator";
-import { logTaskEvent } from "@vex-os/audit";
+import { getDb, schema } from "@nyxor/database";
+import { getInferenceProvider, renderPrompt, type InferenceProvider } from "@nyxor/ai-orchestrator";
+import { logTaskEvent } from "@nyxor/audit";
 import {
   GoogleCalendarAdapter,
   GoogleMailAdapter,
@@ -22,7 +18,9 @@ import {
   OutlookCalendarAdapter,
   OutlookMailAdapter,
   isMicrosoftConnected,
-} from "@vex-os/integrations";
+  getQuotes,
+  getHeadlines,
+} from "@nyxor/integrations";
 
 export class ExecutiveNotFoundError extends Error {
   constructor(executiveId: string) {
@@ -110,6 +108,31 @@ async function gatherMicrosoftContext(executiveId: string): Promise<ProviderCont
   return { connected: true, calendarEvents, emailDigest };
 }
 
+// v2: Portfolio and Breaking News. Same "gather narrowly, degrade to empty
+// on failure, let the template decide whether to mention it at all" shape
+// as gatherGoogleContext/gatherMicrosoftContext above - a market-data or
+// news API outage should read exactly like an executive with no watchlist/
+// interests, not surface an error into the brief.
+async function gatherPortfolioContext(executiveId: string): Promise<string[]> {
+  const db = getDb();
+  const watchlist = await db
+    .select()
+    .from(schema.portfolioWatchlistItems)
+    .where(eq(schema.portfolioWatchlistItems.executiveId, executiveId));
+  if (watchlist.length === 0) return [];
+
+  const quotes = await getQuotes(watchlist.map((item) => item.ticker)).catch(() => []);
+  return quotes.map((q) => {
+    const direction = q.changePercent >= 0 ? "+" : "";
+    return `${q.ticker}: $${q.price.toFixed(2)} (${direction}${q.changePercent.toFixed(2)}%)`;
+  });
+}
+
+async function gatherNewsContext(topicsOfInterest: string[]): Promise<string[]> {
+  const headlines = await getHeadlines({ topics: topicsOfInterest, limit: 5 }).catch(() => []);
+  return headlines.map((h) => `${h.title} (${h.source})`);
+}
+
 /**
  * Generates and persists today's (in the executive's own timezone) morning
  * brief. Idempotent: if one already exists for today, returns it unchanged
@@ -168,9 +191,17 @@ export async function generateBrief(
     .orderBy(desc(schema.executiveIntelligenceProfiles.version))
     .limit(1);
 
-  const [googleContext, microsoftContext] = await Promise.all([
+  // topicsOfInterest is untyped jsonb at the schema level (same as
+  // timeDrains/tools elsewhere in this profile) - cast here rather than
+  // introducing a schema-level $type<string[]>() convention nothing else
+  // in this table uses yet.
+  const topicsOfInterest = (latestProfile?.topicsOfInterest as string[] | undefined) ?? [];
+
+  const [googleContext, microsoftContext, portfolioSummary, breakingNews] = await Promise.all([
     gatherGoogleContext(executiveId),
     gatherMicrosoftContext(executiveId),
+    gatherPortfolioContext(executiveId),
+    gatherNewsContext(topicsOfInterest),
   ]);
   // Merged rather than sectioned per-provider: the brief cares about "what's
   // on the calendar / in the inbox," not which provider it came from, and
@@ -180,7 +211,7 @@ export async function generateBrief(
   const calendarEvents = [...googleContext.calendarEvents, ...microsoftContext.calendarEvents];
   const emailDigest = [...googleContext.emailDigest, ...microsoftContext.emailDigest];
 
-  const systemPrompt = await renderPrompt("morning-brief/system.v1.hbs", {
+  const systemPrompt = await renderPrompt("morning-brief/system.v2.hbs", {
     executiveName: executive.name,
     date: today,
     hitlQueueCount: pendingHitlItems.length,
@@ -192,6 +223,8 @@ export async function generateBrief(
     calendarEmailConnected,
     calendarEvents,
     emailDigest,
+    portfolioSummary,
+    breakingNews,
   });
 
   const result = await provider.complete({
@@ -208,6 +241,8 @@ export async function generateBrief(
     microsoftConnected: microsoftContext.connected,
     calendarEventCount: calendarEvents.length,
     unreadEmailCount: emailDigest.length,
+    portfolioTickerCount: portfolioSummary.length,
+    newsHeadlineCount: breakingNews.length,
   };
 
   const [brief] = await db

@@ -28,7 +28,7 @@ export async function downloadAuditExport(
   // generic one only if that header is somehow missing.
   const disposition = res.headers.get("Content-Disposition") ?? "";
   const filenameMatch = /filename="([^"]+)"/.exec(disposition);
-  const filename = filenameMatch?.[1] ?? `vex-os-audit-export.${params.format}`;
+  const filename = filenameMatch?.[1] ?? `nyxor-audit-export.${params.format}`;
 
   const blob = await res.blob();
   const url = URL.createObjectURL(blob);

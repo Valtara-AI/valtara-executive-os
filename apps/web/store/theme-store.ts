@@ -9,7 +9,7 @@ export type Theme = "light" | "dark";
 
 // Exported so layout.tsx's blocking inline theme-flash-prevention script
 // (Phase A) reads the same key rather than defining it a second time.
-export const STORAGE_KEY = "vex-os-theme";
+export const STORAGE_KEY = "nyxor-theme";
 
 function applyThemeToDocument(theme: Theme) {
   document.documentElement.setAttribute("data-theme", theme);

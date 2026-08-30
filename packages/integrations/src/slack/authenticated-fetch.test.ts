@@ -6,7 +6,7 @@
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { eq } from "drizzle-orm";
-import { getDb, schema } from "@vex-os/database";
+import { getDb, schema } from "@nyxor/database";
 import { saveTokens } from "../token-store.js";
 import { InsufficientScopeError, SlackApiError, slackApiFetch } from "./authenticated-fetch.js";
 import { IntegrationNotConnectedError } from "../types.js";

@@ -1,6 +1,6 @@
 # 15. Documentation
 
-Call the documentation environment: **vexOS Intelligence Library**
+Call the documentation environment: **Nyxor Intelligence Library**
 
 ## Sections
 

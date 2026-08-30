@@ -1,7 +1,7 @@
 # Multi-stage build for apps/api (DL-INFRA-001: Railway, Docker-deployable
 # per CLAUDE.md non-negotiable #5 - no proprietary managed service this
 # can't be migrated off). Built from the monorepo root so npm workspaces
-# can resolve @vex-os/* packages; only apps/api's runtime dependency graph
+# can resolve @nyxor/* packages; only apps/api's runtime dependency graph
 # (shared, database, ai-orchestrator, audit) ends up in the final image.
 
 FROM node:20-slim AS base

@@ -1,7 +1,7 @@
 // API-001 §3.4. events.insert/update require an approved HITL record
 // (DL-ARCH-005), same pattern as GoogleCalendarAdapter.createEvent/updateEvent.
 
-import { getDb, schema } from "@vex-os/database";
+import { getDb, schema } from "@nyxor/database";
 import type {
   AuthorizationRequest,
   HitlGatedWriteContext,

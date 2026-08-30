@@ -15,8 +15,8 @@
 
 import { createHash } from "node:crypto";
 import { desc, sql } from "drizzle-orm";
-import { getDb, schema } from "@vex-os/database";
-import type { AuditLogEntry } from "@vex-os/shared";
+import { getDb, schema } from "@nyxor/database";
+import type { AuditLogEntry } from "@nyxor/shared";
 
 // Arbitrary fixed key identifying "the audit log chain" as an advisory lock
 // target. Any int64 works as long as it's unique to this lock's purpose

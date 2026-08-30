@@ -4,7 +4,7 @@ Executive decks should use a **Midnight Executive** theme.
 
 ## Cover
 
-Large vexOS mark. Minimal title. Small gradient orbit.
+Large Nyxor mark. Minimal title. Small gradient orbit.
 
 ## Slide families
 

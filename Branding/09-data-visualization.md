@@ -1,6 +1,6 @@
 # 9. Data Visualization
 
-vexOS charts should use restrained executive visualization.
+Nyxor charts should use restrained executive visualization.
 
 - **Blue** = primary business data
 - **Cyan** = positive intelligence/signal
@@ -14,7 +14,7 @@ Avoid rainbow dashboards.
 
 A proprietary visualization: CEO at the center, surrounded by orbiting domains — **Strategy · People · Finance · Operations · Customers · Risk · Personal**. Their distance/intensity represents current attention requirements.
 
-This can become a highly recognizable vexOS motif.
+This can become a highly recognizable Nyxor motif.
 
 ---
 

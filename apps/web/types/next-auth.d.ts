@@ -1,5 +1,5 @@
 import type { DefaultSession } from "next-auth";
-import type { Role } from "@vex-os/shared";
+import type { Role } from "@nyxor/shared";
 
 declare module "next-auth" {
   interface Session {

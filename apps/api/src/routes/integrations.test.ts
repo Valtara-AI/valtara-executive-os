@@ -6,8 +6,8 @@
 
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { eq } from "drizzle-orm";
-import { getDb, schema } from "@vex-os/database";
-import { getTokens } from "@vex-os/integrations";
+import { getDb, schema } from "@nyxor/database";
+import { getTokens } from "@nyxor/integrations";
 import { createTestJwtSigner } from "../test-utils/jwt.js";
 
 const hasDb =

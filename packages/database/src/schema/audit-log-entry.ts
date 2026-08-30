@@ -1,6 +1,6 @@
 import { jsonb, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 
-// Shape per VEX-OS-SAD-001 §4.6 (audit-layer spec, authoritative for
+// Shape per NYXOR-SAD-001 §4.6 (audit-layer spec, authoritative for
 // implementation — see the note in packages/shared/src/types/entities.ts):
 // {id, timestamp, actor_id, actor_role, entity_type, entity_id, action,
 // input_hash, output_hash, metadata}, plus prev_hash/record_hash for the

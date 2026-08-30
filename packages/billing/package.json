@@ -1,5 +1,5 @@
 {
-  "name": "@vex-os/billing",
+  "name": "@nyxor/billing",
   "version": "0.1.0",
   "private": true,
   "description": "Stripe subscription billing and tier entitlements (DL-ARCH-010)",
@@ -20,8 +20,8 @@
     "typecheck": "tsc --build"
   },
   "dependencies": {
-    "@vex-os/database": "*",
-    "@vex-os/shared": "*",
+    "@nyxor/database": "*",
+    "@nyxor/shared": "*",
     "drizzle-orm": "^0.45.2",
     "stripe": "^22.5.0"
   }

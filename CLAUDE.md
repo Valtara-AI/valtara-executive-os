@@ -1,7 +1,8 @@
-# Valtara Executive OS (VEX-OS) — Claude Code Context
+# Nyxor — Claude Code Context
 
 ## Project Identity
-- **Product:** Valtara Executive OS (VEX-OS)
+
+- **Product:** Nyxor
 - **Owner:** Francis Ogbogu — Chief AI Officer, Valtara AI
 - **Organization:** Valtara Inc. (Valtara AI), Saskatoon, Saskatchewan, Canada
 - **Repo:** github.com/blu-geek / Valtara org
@@ -11,7 +12,7 @@
 
 ## What This System Is
 
-VEX-OS is a domain-agnostic, AI-powered Executive Operating System comprising three integrated layers:
+NYXOR is a domain-agnostic, AI-powered Executive Operating System comprising three integrated layers:
 
 1. **Onboarding Agent** — interviews each executive; generates Executive Intelligence Profile; dynamically provisions a custom AI agent workforce specific to their role, industry, and function
 2. **Executive Dashboard** — personalized command center: morning briefs, HITL queue, task status, decision inbox, calendar intelligence
@@ -24,25 +25,30 @@ VEX-OS is a domain-agnostic, AI-powered Executive Operating System comprising th
 These are absolute. No task, optimization, or shortcut overrides them.
 
 ### 1. MODEL AGNOSTIC
+
 All LLM inference routes through the `InferenceProvider` adapter in `packages/ai-orchestrator/`.
 No provider SDK (OpenAI, Anthropic, Google, Mistral, Groq) called directly in business logic.
 Provider selected via `LLM_PROVIDER` env var only.
 
 ### 2. API FIRST
+
 All integrations use published REST APIs.
 MCP connections permitted only where no REST API exists.
-Each MCP exception must be documented in `docs/01-technical/VEX-OS-API-001` Section 6 with CAO approval before implementation.
+Each MCP exception must be documented in `docs/01-technical/NYXOR-API-001` Section 6 with CAO approval before implementation.
 
 ### 3. SECRETS IN .ENV ONLY
+
 No credential, API key, or secret in source code, config files, or version control.
 `.env` always in `.gitignore`. Pre-commit hook enforced. CI secret scan enforced.
 
 ### 4. HITL IS ARCHITECTURAL
+
 No agent may trigger an external action (send email, post to Slack, modify calendar) without an approved HITL queue record.
 Enforced at the application layer via database constraint.
 This cannot be bypassed. It cannot be made optional.
 
 ### 5. NO VENDOR LOCK-IN
+
 PostgreSQL-compatible database only. Provider-agnostic infrastructure.
 No proprietary managed services that cannot be migrated. Docker-deployable backend.
 
@@ -50,18 +56,18 @@ No proprietary managed services that cannot be migrated. Docker-deployable backe
 
 ## Technology Stack
 
-| Layer | Technology |
-|---|---|
-| Frontend | Next.js 14 (App Router) + React 18 + TypeScript |
-| Styling | Tailwind CSS + Shadcn/UI |
-| Backend | Node.js 20 LTS + TypeScript |
-| Database | PostgreSQL 15 via Supabase + Drizzle ORM |
-| Queue | BullMQ + Redis |
-| Auth | NextAuth.js v5 — Google + Microsoft OAuth 2.0 |
-| AI Adapter | Custom InferenceProvider (packages/ai-orchestrator/) |
+| Layer      | Technology                                            |
+| ---------- | ----------------------------------------------------- |
+| Frontend   | Next.js 14 (App Router) + React 18 + TypeScript       |
+| Styling    | Tailwind CSS + Shadcn/UI                              |
+| Backend    | Node.js 20 LTS + TypeScript                           |
+| Database   | PostgreSQL 15 via Supabase + Drizzle ORM              |
+| Queue      | BullMQ + Redis                                        |
+| Auth       | NextAuth.js v5 — Google + Microsoft OAuth 2.0         |
+| AI Adapter | Custom InferenceProvider (packages/ai-orchestrator/)  |
 | Deployment | Vercel (frontend) + Railway/Fly.io (backend) + Docker |
-| CI/CD | GitHub Actions |
-| Monitoring | OpenTelemetry + Pino structured logging |
+| CI/CD      | GitHub Actions                                        |
+| Monitoring | OpenTelemetry + Pino structured logging               |
 
 ---
 
@@ -127,10 +133,10 @@ IntegrationToken    { id, executive_id, provider, access_token_encrypted, refres
 
 ## HITL Mode Reference
 
-| Mode | Behaviour |
-|---|---|
-| Auto-Draft → Review | Agent completes task → output held in HITL queue → executive approves / edits / rejects |
-| Checkpoint | Agent pauses at defined milestones → HITL queue entry → resumes only on executive action |
+| Mode                | Behaviour                                                                                   |
+| ------------------- | ------------------------------------------------------------------------------------------- |
+| Auto-Draft → Review | Agent completes task → output held in HITL queue → executive approves / edits / rejects     |
+| Checkpoint          | Agent pauses at defined milestones → HITL queue entry → resumes only on executive action    |
 | Autonomous + Report | Agent executes fully → completion report delivered to dashboard → executive reviews outcome |
 
 HITL mode is configurable per agent. Mode change takes effect on next task.
@@ -177,7 +183,7 @@ GOOGLE_AI_API_KEY=
 ## Decision Log
 
 All significant architectural decisions are logged in:
-`docs/04-build-governance/VEX-OS-DL-001-Decision-Log.docx`
+`docs/04-build-governance/NYXOR-DL-001-Decision-Log.docx`
 
 Before making a significant design decision, check the Decision Log.
 After making one, add an entry. Format: `DL-[CATEGORY]-[NUMBER]`.
@@ -188,30 +194,30 @@ After making one, add an entry. Format: `DL-[CATEGORY]-[NUMBER]`.
 
 23 governance documents in `docs/`. All completed before Sprint 1.
 
-| Key Document | Purpose |
-|---|---|
-| VEX-OS-SRS-001 | System behavior specification |
-| VEX-OS-SAD-001 | Architecture and technology decisions |
-| VEX-OS-API-001 | API contracts and .env template |
-| VEX-OS-ETF-001 | Ethical constraints and prohibited behaviors |
-| VEX-OS-SEC-001 | Security controls |
-| VEX-OS-DMP-001 | Data management and classification |
-| VEX-OS-DL-001 | Decision log (living document) |
+| Key Document  | Purpose                                      |
+| ------------- | -------------------------------------------- |
+| NYXOR-SRS-001 | System behavior specification                |
+| NYXOR-SAD-001 | Architecture and technology decisions        |
+| NYXOR-API-001 | API contracts and .env template              |
+| NYXOR-ETF-001 | Ethical constraints and prohibited behaviors |
+| NYXOR-SEC-001 | Security controls                            |
+| NYXOR-DMP-001 | Data management and classification           |
+| NYXOR-DL-001  | Decision log (living document)               |
 
 ---
 
 ## Sprint Plan
 
-| Sprint | Focus |
-|---|---|
-| 1 | Project scaffold, auth, onboarding agent conversation engine |
-| 2 | Agent workforce activation, Voice Profile extraction, HITL engine |
-| 3 | Executive dashboard, morning brief generation |
-| 4 | Gmail + Google Calendar integration |
-| 5 | Outlook Mail + Calendar integration |
-| 6 | Slack integration, audit log, compliance export |
-| 7 | Performance hardening, security review, UAT |
-| 8 | Pilot launch, monitoring, on-call rotation |
+| Sprint | Focus                                                             |
+| ------ | ----------------------------------------------------------------- |
+| 1      | Project scaffold, auth, onboarding agent conversation engine      |
+| 2      | Agent workforce activation, Voice Profile extraction, HITL engine |
+| 3      | Executive dashboard, morning brief generation                     |
+| 4      | Gmail + Google Calendar integration                               |
+| 5      | Outlook Mail + Calendar integration                               |
+| 6      | Slack integration, audit log, compliance export                   |
+| 7      | Performance hardening, security review, UAT                       |
+| 8      | Pilot launch, monitoring, on-call rotation                        |
 
 ---
 
@@ -224,4 +230,4 @@ After making one, add an entry. Format: `DL-[CATEGORY]-[NUMBER]`.
 - Write raw SQL queries without Engineering Lead approval
 - Put `console.log` or PII in production logging code
 - Deploy to production without all CI pipeline stages passing
-- Add a new integration without checking VEX-OS-API-001 for the MCP exception register
+- Add a new integration without checking NYXOR-API-001 for the MCP exception register

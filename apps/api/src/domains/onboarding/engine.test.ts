@@ -6,8 +6,8 @@
 
 import { afterAll, describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
-import { getDb, schema } from "@vex-os/database";
-import { MockProvider } from "@vex-os/ai-orchestrator";
+import { getDb, schema } from "@nyxor/database";
+import { MockProvider } from "@nyxor/ai-orchestrator";
 import { FIRST_QUESTION_ID, QUESTION_BANK } from "./question-bank.js";
 import * as engine from "./engine.js";
 
@@ -54,6 +54,7 @@ describe.skipIf(!hasDb)("onboarding engine end-to-end", () => {
       "Short and direct.", // communication_style
       "Team, quick update: shipped the v2 API today, on track for Friday's release.", // voice_sample
       "Close the Q3 enterprise deal and finish the Series B deck.", // priorities
+      "Enterprise SaaS competitors, AI regulation, and our Series B investors.", // topics_of_interest
     ];
 
     let done = false;
@@ -69,6 +70,7 @@ describe.skipIf(!hasDb)("onboarding engine end-to-end", () => {
         delegationCandidates: ["Draft inbox triage summaries", "Draft weekly status decks"],
         communicationStyle: "Short and direct.",
         tools: ["Gmail", "Google Calendar", "Slack"],
+        topicsOfInterest: ["Enterprise SaaS competitors", "AI regulation"],
       }),
       JSON.stringify({
         tone: "direct",
@@ -105,6 +107,10 @@ describe.skipIf(!hasDb)("onboarding engine end-to-end", () => {
       .from(schema.executiveIntelligenceProfiles)
       .where(eq(schema.executiveIntelligenceProfiles.id, completeResult.intelligenceProfileId));
     expect(persistedProfile?.tools).toEqual(["Gmail", "Google Calendar", "Slack"]);
+    expect(persistedProfile?.topicsOfInterest).toEqual([
+      "Enterprise SaaS competitors",
+      "AI regulation",
+    ]);
 
     const confirmResult = await engine.confirm(sessionId, [
       {

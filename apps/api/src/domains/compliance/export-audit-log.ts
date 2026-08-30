@@ -6,7 +6,7 @@
 // formats.
 
 import { and, asc, eq, gte, lte, type SQL } from "drizzle-orm";
-import { getDb, schema } from "@vex-os/database";
+import { getDb, schema } from "@nyxor/database";
 
 export interface AuditExportFilters {
   from?: Date;

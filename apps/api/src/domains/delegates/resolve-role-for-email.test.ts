@@ -3,7 +3,7 @@
 
 import { afterEach, describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
-import { getDb, schema } from "@vex-os/database";
+import { getDb, schema } from "@nyxor/database";
 import { resolveRoleForEmail } from "./resolve-role-for-email.js";
 
 const hasDb = Boolean(process.env.DATABASE_URL);

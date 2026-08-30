@@ -4,7 +4,7 @@
 // "try again" without needing a separate reinstate endpoint).
 
 import { and, eq } from "drizzle-orm";
-import { getDb, schema } from "@vex-os/database";
+import { getDb, schema } from "@nyxor/database";
 
 export function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();

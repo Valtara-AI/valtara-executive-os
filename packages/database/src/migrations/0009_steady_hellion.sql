@@ -1,0 +1,1 @@
+ALTER TABLE "executive_intelligence_profiles" ADD COLUMN "topics_of_interest" jsonb DEFAULT '[]'::jsonb NOT NULL;

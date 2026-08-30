@@ -5,7 +5,7 @@
 
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import { SignJWT, exportSPKI, generateKeyPair } from "jose";
-import type { JwtPayload, Role } from "@vex-os/shared";
+import type { JwtPayload, Role } from "@nyxor/shared";
 
 vi.mock("./domains/onboarding/engine", () => ({
   startSession: vi

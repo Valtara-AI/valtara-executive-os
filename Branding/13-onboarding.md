@@ -1,6 +1,6 @@
 # 13. Onboarding
 
-Turn onboarding into: **Initialize your vexOS**
+Turn onboarding into: **Initialize your Nyxor**
 
 ## Progress language
 
@@ -15,4 +15,4 @@ Turn onboarding into: **Initialize your vexOS**
 
 ---
 
-**Implementation note**: VEX-OS's real onboarding flow (`apps/web/app/onboarding/page.tsx` + `apps/api/src/domains/onboarding/`) is a conversational interview (≥12 questions) producing an Executive Intelligence Profile, Voice Profile, and proposed agent workforce for review/confirm — a different shape than this 6-step wizard framing. The step _language_ ("Identity," "Priorities," "Delegation") could relabel sections of the existing flow without restructuring it.
+**Implementation note**: NYXOR's real onboarding flow (`apps/web/app/onboarding/page.tsx` + `apps/api/src/domains/onboarding/`) is a conversational interview (≥12 questions) producing an Executive Intelligence Profile, Voice Profile, and proposed agent workforce for review/confirm — a different shape than this 6-step wizard framing. The step _language_ ("Identity," "Priorities," "Delegation") could relabel sections of the existing flow without restructuring it.

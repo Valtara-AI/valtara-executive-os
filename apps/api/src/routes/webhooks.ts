@@ -6,8 +6,8 @@
 // route itself checks.
 
 import { Hono } from "hono";
-import { handleStripeWebhook } from "@vex-os/billing";
-import { fail, ok } from "@vex-os/shared";
+import { handleStripeWebhook } from "@nyxor/billing";
+import { fail, ok } from "@nyxor/shared";
 import { logger } from "../logger.js";
 
 export const webhooksRoute = new Hono();

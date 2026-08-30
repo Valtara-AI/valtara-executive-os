@@ -25,8 +25,8 @@
 //     new user).
 
 import { eq } from "drizzle-orm";
-import { getDb, schema } from "@vex-os/database";
-import type { Role } from "@vex-os/shared";
+import { getDb, schema } from "@nyxor/database";
+import type { Role } from "@nyxor/shared";
 import { normalizeEmail } from "./invite-delegate.js";
 
 function isAdminEmail(email: string): boolean {

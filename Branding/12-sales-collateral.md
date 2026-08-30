@@ -2,7 +2,7 @@
 
 Create:
 
-- vexOS Executive Overview
+- Nyxor Executive Overview
 - Product One-Pager
 - Enterprise Security Brief
 - AI Architecture Brief

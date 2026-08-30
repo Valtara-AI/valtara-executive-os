@@ -3,7 +3,7 @@
 // record (DL-ARCH-005) - same insert-external_actions-row-before-calling-
 // the-API pattern as GoogleMailAdapter.sendMessage.
 
-import { getDb, schema } from "@vex-os/database";
+import { getDb, schema } from "@nyxor/database";
 import type {
   AuthorizationRequest,
   HitlGatedWriteContext,

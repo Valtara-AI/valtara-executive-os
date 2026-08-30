@@ -10,7 +10,7 @@ Motion becomes part of the identity.
 
 Keep motion sophisticated and restrained: generally **180–400 ms** for UI interactions.
 
-The logo animation can begin with three orbital nodes, converge into the V, and resolve into **vexOS**.
+The logo animation can begin with three orbital nodes, converge into the V, and resolve into **Nyxor**.
 
 ---
 

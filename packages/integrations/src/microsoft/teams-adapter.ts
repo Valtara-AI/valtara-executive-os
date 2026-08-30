@@ -18,7 +18,7 @@
 // rather than this adapter ever bulk-exporting a executive's entire Teams
 // history).
 
-import { getDb, schema } from "@vex-os/database";
+import { getDb, schema } from "@nyxor/database";
 import type {
   AuthorizationRequest,
   HitlGatedWriteContext,

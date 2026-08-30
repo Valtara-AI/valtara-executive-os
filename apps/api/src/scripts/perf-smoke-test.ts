@@ -1,4 +1,4 @@
-// SRS §6 performance smoke test - VEX-OS-ETP-001 TC-PERF-01/02 scoped down
+// SRS §6 performance smoke test - NYXOR-ETP-001 TC-PERF-01/02 scoped down
 // to what's honestly checkable on a laptop against the local dev stack:
 // real HTTP round trips (not in-process app.request() calls) at a modest
 // concurrency, against a real Postgres with one seeded executive.
@@ -15,7 +15,7 @@
 
 import { serve } from "@hono/node-server";
 import { eq } from "drizzle-orm";
-import { getDb, schema } from "@vex-os/database";
+import { getDb, schema } from "@nyxor/database";
 import { createApp } from "../app.js";
 import { createTestJwtSigner } from "../test-utils/jwt.js";
 

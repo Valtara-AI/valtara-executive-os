@@ -6,7 +6,7 @@
 // never happens at all, not that it happens and gets logged after the
 // fact.
 
-import { getDb, schema } from "@vex-os/database";
+import { getDb, schema } from "@nyxor/database";
 import type {
   AuthorizationRequest,
   HitlGatedWriteContext,

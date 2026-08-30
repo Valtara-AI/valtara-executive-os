@@ -12,7 +12,7 @@
 // (queue/connection.ts) rather than opening a second pool.
 
 import type { Context, Next } from "hono";
-import { fail } from "@vex-os/shared";
+import { fail } from "@nyxor/shared";
 import { getRedisConnection } from "../queue/connection.js";
 import { logger } from "../logger.js";
 import type { AuthedVariables } from "./jwt.js";

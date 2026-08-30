@@ -12,14 +12,14 @@
 import { Hono } from "hono";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
-import { getDb, schema } from "@vex-os/database";
+import { getDb, schema } from "@nyxor/database";
 import {
   assertAgentLimit,
   assertCostBudget,
   assertTaskVolume,
   EntitlementError,
-} from "@vex-os/billing";
-import { HITL_MODES, fail, ok, type HitlMode } from "@vex-os/shared";
+} from "@nyxor/billing";
+import { HITL_MODES, fail, ok, type HitlMode } from "@nyxor/shared";
 import type { AuthedVariables } from "../middleware/jwt.js";
 import { requireRole } from "../middleware/rbac.js";
 import { resolveExecutive } from "../domains/onboarding/resolve-executive.js";

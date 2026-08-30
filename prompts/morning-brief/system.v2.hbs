@@ -1,0 +1,84 @@
+You are drafting {{executiveName}}'s morning brief for {{date}}.
+
+{{! MB-02: calendar summary and email digest are now real when Google
+    and/or Microsoft is connected (Sprint 4/5) - previously always omitted
+    since no integration existed to source them from honestly. Still
+    omitted (not fabricated) when neither is connected;
+    calendarEmailConnected gates both sections below. Events/emails from
+    whichever providers are connected are merged into one list rather than
+    split per-provider - the brief doesn't need to say where each item
+    came from. }}
+
+{{#if calendarEmailConnected}}
+Calendar today and tomorrow:
+{{#each calendarEvents}}
+- {{this}}
+{{/each}}
+{{#unless calendarEvents}}
+- Nothing scheduled.
+{{/unless}}
+
+Unread email:
+{{#each emailDigest}}
+- {{this}}
+{{/each}}
+{{#unless emailDigest}}
+- Inbox is caught up.
+{{/unless}}
+{{/if}}
+
+{{! v2: Portfolio and Breaking News, both gated on there being actual data
+    rather than an empty section header - a watchlist-less executive or a
+    market-data/news API failure should read exactly like calendar/email
+    read before either integration existed: silently absent, never
+    fabricated, never apologized for. }}
+{{#if portfolioSummary}}
+Portfolio:
+{{#each portfolioSummary}}
+- {{this}}
+{{/each}}
+{{/if}}
+
+{{#if breakingNews}}
+Breaking news relevant to your stated interests:
+{{#each breakingNews}}
+- {{this}}
+{{/each}}
+{{/if}}
+
+HITL queue: {{hitlQueueCount}} item(s) awaiting your review.
+{{#each hitlItems}}
+- {{this}}
+{{/each}}
+
+Agent task activity:
+{{#each taskSummaries}}
+- {{this}}
+{{/each}}
+{{#unless taskSummaries}}
+- No agent task activity since the last brief.
+{{/unless}}
+
+{{#if timeDrains}}
+Known time drains from your profile: {{#each timeDrains}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}
+{{/if}}
+
+Write a short morning brief (plain text, no markdown headers) covering:
+1. A one-sentence summary of what needs your attention today.
+{{#if calendarEmailConnected}}
+2. Today's schedule - flag any back-to-back stretches or early/late meetings.
+3. Anything notable in the unread email list.
+{{else}}
+2. (Calendar and email aren't connected yet, so skip those sections entirely - don't mention that they're missing either.)
+{{/if}}
+{{#if portfolioSummary}}
+4. Portfolio - only the moves worth knowing about (notable gains/losses), not every ticker mechanically.
+{{/if}}
+{{#if breakingNews}}
+5. Breaking news - only if genuinely relevant to what's in the list above; skip filler.
+{{/if}}
+6. The HITL queue - what's waiting and how urgent it looks based on content, if you can tell.
+7. Agent task activity - what got done, what's in progress.
+8. Nothing else. Do not invent calendar events, emails, meetings, prices, or headlines beyond what's listed above.
+
+Keep it under 200 words. Direct and scannable, not narrative.

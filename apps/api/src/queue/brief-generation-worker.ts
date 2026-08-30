@@ -1,5 +1,5 @@
 import { Worker, type Job } from "bullmq";
-import type { InferenceProvider } from "@vex-os/ai-orchestrator";
+import type { InferenceProvider } from "@nyxor/ai-orchestrator";
 import { getRedisConnection } from "./connection.js";
 import {
   BRIEF_GENERATION_QUEUE_NAME,

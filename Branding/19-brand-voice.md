@@ -1,6 +1,6 @@
 # 19. Brand Voice
 
-vexOS should sound: **Concise. Intelligent. Decisive. Calm.**
+Nyxor should sound: **Concise. Intelligent. Decisive. Calm.**
 
 **Not**: "Awesome! We've analyzed all your tasks!"
 **Prefer**: Three priorities require your attention.

@@ -3,8 +3,8 @@
 
 import { afterEach, describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
-import { getDb, schema } from "@vex-os/database";
-import type { JwtPayload } from "@vex-os/shared";
+import { getDb, schema } from "@nyxor/database";
+import type { JwtPayload } from "@nyxor/shared";
 import { resolveAccessibleExecutiveIds } from "./resolve-accessible-executive-ids.js";
 
 const hasDb = Boolean(process.env.DATABASE_URL);

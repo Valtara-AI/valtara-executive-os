@@ -49,5 +49,9 @@ export const MAX_ONBOARDING_AGENTS = 8;
 // SRS OA-SYS-01: minimum 12 discovery questions.
 export const MIN_ONBOARDING_QUESTIONS = 12;
 
+// Cap on executiveIntelligenceProfiles.topicsOfInterest - same "bound
+// array-shaped free text" precedent as MIN/MAX_ONBOARDING_AGENTS.
+export const MAX_TOPICS_OF_INTEREST = 10;
+
 // SRS §3.3 / SAD §4.3: response validation retry policy.
 export const MAX_LLM_RESPONSE_RETRIES = 3;

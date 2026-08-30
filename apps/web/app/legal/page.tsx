@@ -13,7 +13,7 @@ export default function LegalIndexPage() {
       <h1 className="text-2xl font-semibold">Legal</h1>
       <p className="text-sm text-muted-foreground">
         These documents are drafts pending legal counsel review, published here as the current
-        source of truth about how VEX-OS actually handles your data - not yet the final, approved
+        source of truth about how NYXOR actually handles your data - not yet the final, approved
         versions.
       </p>
       <ul className="flex flex-col gap-2">

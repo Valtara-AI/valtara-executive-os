@@ -1,6 +1,6 @@
 # North-Star Visual
 
-The strongest expression of vexOS is:
+The strongest expression of Nyxor is:
 
 > Midnight executive environment + restrained typography + luminous intelligence gradient + orbital V + extremely clear information hierarchy.
 

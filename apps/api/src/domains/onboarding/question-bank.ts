@@ -117,6 +117,13 @@ export const QUESTION_BANK: Record<string, QuestionNode> = {
     questionText:
       "Looking at the next quarter, what's the one or two priorities that everything else should take a back seat to?",
     field: "intelligenceProfile.delegationCandidates",
+    next: () => "topics_of_interest",
+  },
+  topics_of_interest: {
+    id: "topics_of_interest",
+    questionText:
+      "What industries, companies, or topics do you want your morning brief to keep you on top of in the news?",
+    field: "intelligenceProfile.topicsOfInterest",
     next: () => null,
   },
 };

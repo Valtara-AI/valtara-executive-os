@@ -7,7 +7,7 @@ import { renderLegalMarkdown } from "@/lib/render-legal-markdown";
 // Renders docs/06-legal/*.md directly (fs.readFileSync at request time) so
 // there is exactly one source of truth for legal content - duplicating
 // this text into JSX here would drift from the real document the same way
-// VEX-OS-DMP-001's sub-processor table had drifted before this page was
+// NYXOR-DMP-001's sub-processor table had drifted before this page was
 // added. Rendered as preformatted text rather than parsed Markdown: no
 // new dependency for a v1 legal page, at the cost of no rich formatting -
 // revisit once the marketing site (a separate, not-yet-scoped piece of
@@ -19,10 +19,10 @@ import { renderLegalMarkdown } from "@/lib/render-legal-markdown";
 // route is relied on in a real deployment, not just local staging.
 
 const DOC_FILES: Record<string, string> = {
-  terms: "VEX-OS-LGL-001-Terms-of-Service.md",
-  privacy: "VEX-OS-LGL-002-Privacy-Policy.md",
-  dpa: "VEX-OS-LGL-003-Data-Processing-Agreement.md",
-  cookies: "VEX-OS-LGL-004-Cookie-Policy.md",
+  terms: "NYXOR-LGL-001-Terms-of-Service.md",
+  privacy: "NYXOR-LGL-002-Privacy-Policy.md",
+  dpa: "NYXOR-LGL-003-Data-Processing-Agreement.md",
+  cookies: "NYXOR-LGL-004-Cookie-Policy.md",
 };
 
 export function generateStaticParams() {

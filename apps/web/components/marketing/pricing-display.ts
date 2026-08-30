@@ -6,11 +6,11 @@
 // - the object's own keys stay "starter"/"pro"/"enterprise" to match
 // SubscriptionTier and the existing STRIPE_PRICE_ID_STARTER env var, so
 // this is a label change only, not a tier-identifier rename. Feature
-// LIMITS must stay imported from @vex-os/billing/tiers, never re-typed
-// here, to avoid the exact drift VEX-OS-DMP-001's sub-processor table
+// LIMITS must stay imported from @nyxor/billing/tiers, never re-typed
+// here, to avoid the exact drift NYXOR-DMP-001's sub-processor table
 // had before this session fixed it.
 
-import type { SubscriptionTier } from "@vex-os/billing/tiers";
+import type { SubscriptionTier } from "@nyxor/billing/tiers";
 
 export interface TierDisplay {
   name: string;

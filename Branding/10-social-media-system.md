@@ -8,7 +8,7 @@ Dark editorial cards. Large provocative statements:
 
 > CEOs don't need more information. They need better orchestration.
 
-Small vexOS logo/footer.
+Small Nyxor logo/footer.
 
 ## Product Intelligence
 

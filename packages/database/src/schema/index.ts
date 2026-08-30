@@ -14,3 +14,6 @@ export * from "./external-action.js";
 export * from "./refresh-token-revocation.js";
 export * from "./delegate-link.js";
 export * from "./subscription.js";
+export * from "./portfolio-watchlist.js";
+export * from "./personal-development-recommendation.js";
+export * from "./articulation-session.js";

@@ -8,8 +8,8 @@
 // executive content").
 
 import { and, eq } from "drizzle-orm";
-import { getDb, schema } from "@vex-os/database";
-import type { JwtPayload } from "@vex-os/shared";
+import { getDb, schema } from "@nyxor/database";
+import type { JwtPayload } from "@nyxor/shared";
 import { resolveExecutive } from "../onboarding/resolve-executive.js";
 import { normalizeEmail } from "./invite-delegate.js";
 

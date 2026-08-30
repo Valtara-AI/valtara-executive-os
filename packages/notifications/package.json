@@ -1,5 +1,5 @@
 {
-  "name": "@vex-os/notifications",
+  "name": "@nyxor/notifications",
   "version": "0.1.0",
   "private": true,
   "description": "Transactional email notifications (HITL review requests, task completion) - closes the poll-the-dashboard gap",

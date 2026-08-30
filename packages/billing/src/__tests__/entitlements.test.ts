@@ -6,9 +6,10 @@
 
 import { afterEach, describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
-import { getDb, schema } from "@vex-os/database";
+import { getDb, schema } from "@nyxor/database";
 import {
   assertAgentLimit,
+  assertArticulationSessionVolume,
   assertCostBudget,
   assertIntegrationAllowed,
   assertSeatLimit,
@@ -195,5 +196,63 @@ describe.skipIf(!hasDb)("entitlements", () => {
     });
 
     await expect(assertCostBudget(executive.id)).resolves.toBeUndefined();
+  });
+
+  it("assertArticulationSessionVolume throws once this month's session count reaches the tier limit", async () => {
+    const executive = await makeExecutive();
+    const db = getDb();
+    await db.insert(schema.subscriptions).values({
+      executiveId: executive.id,
+      stripeCustomerId: "cus_test",
+      stripeSubscriptionId: `sub_test_${Date.now()}`,
+      tier: "starter", // maxMonthlyArticulationSessions: 3
+      status: "active",
+    });
+
+    for (let i = 0; i < 3; i++) {
+      await db.insert(schema.articulationSessions).values({
+        executiveId: executive.id,
+        sessionType: "pitch",
+        inputMode: "text",
+        inputText: "x",
+        feedbackJson: {},
+        clarityScore: 50,
+        structureScore: 50,
+        persuasivenessScore: 50,
+        toneScore: 50,
+      });
+    }
+
+    await expect(assertArticulationSessionVolume(executive.id)).rejects.toThrow(
+      /Articulation training session limit reached/,
+    );
+  });
+
+  it("assertArticulationSessionVolume resolves for an executive under the session cap", async () => {
+    const executive = await makeExecutive();
+    const db = getDb();
+    await db.insert(schema.subscriptions).values({
+      executiveId: executive.id,
+      stripeCustomerId: "cus_test",
+      stripeSubscriptionId: `sub_test_${Date.now()}`,
+      tier: "starter",
+      status: "active",
+    });
+
+    await expect(assertArticulationSessionVolume(executive.id)).resolves.toBeUndefined();
+  });
+
+  it("assertArticulationSessionVolume never throws for enterprise (unlimited)", async () => {
+    const executive = await makeExecutive();
+    const db = getDb();
+    await db.insert(schema.subscriptions).values({
+      executiveId: executive.id,
+      stripeCustomerId: "cus_test",
+      stripeSubscriptionId: `sub_test_${Date.now()}`,
+      tier: "enterprise",
+      status: "active",
+    });
+
+    await expect(assertArticulationSessionVolume(executive.id)).resolves.toBeUndefined();
   });
 });

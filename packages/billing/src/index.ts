@@ -8,6 +8,7 @@ export {
   assertSeatLimit,
   assertTaskVolume,
   assertCostBudget,
+  assertArticulationSessionVolume,
   EntitlementError,
   type EntitlementState,
 } from "./entitlements.js";

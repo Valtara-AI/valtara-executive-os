@@ -5,10 +5,10 @@
 // "insert/check before the real side effect" shape DL-ARCH-005's HITL gate
 // uses, just app-layer rather than a database trigger, since this isn't a
 // security boundary the way HITL is - a bypassed entitlement check costs
-// VEX-OS revenue, not an unapproved external action.
+// NYXOR revenue, not an unapproved external action.
 
 import { and, eq, gte, inArray } from "drizzle-orm";
-import { getDb, schema } from "@vex-os/database";
+import { getDb, schema } from "@nyxor/database";
 import { TIER_LIMITS, type SubscriptionTier, type TierLimits } from "./tiers.js";
 import { computeCostCents } from "./model-pricing.js";
 
@@ -25,6 +25,7 @@ const ZERO_LIMITS: TierLimits = {
   maxDelegateSeats: 0,
   maxMonthlyTasks: 0,
   maxMonthlyCostCents: 0,
+  maxMonthlyArticulationSessions: 0,
 };
 
 function startOfCurrentMonthUtc(): Date {
@@ -162,6 +163,31 @@ export async function assertCostBudget(executiveId: string): Promise<void> {
   if (spentCents >= limits.maxMonthlyCostCents) {
     throw new EntitlementError(
       `Monthly usage budget reached ($${(limits.maxMonthlyCostCents / 100).toFixed(2)} on your current plan). Upgrade or wait until next month.`,
+    );
+  }
+}
+
+// Text and audio sessions count against the same limit - both produce one
+// articulation_sessions row via the same analyzeSpeech() path, so there's
+// no separate axis to gate per input mode.
+export async function assertArticulationSessionVolume(executiveId: string): Promise<void> {
+  const { limits } = await getEntitlements(executiveId);
+  if (limits.maxMonthlyArticulationSessions === Infinity) return;
+
+  const db = getDb();
+  const sessionsThisMonth = await db
+    .select({ id: schema.articulationSessions.id })
+    .from(schema.articulationSessions)
+    .where(
+      and(
+        eq(schema.articulationSessions.executiveId, executiveId),
+        gte(schema.articulationSessions.createdAt, startOfCurrentMonthUtc()),
+      ),
+    );
+
+  if (sessionsThisMonth.length >= limits.maxMonthlyArticulationSessions) {
+    throw new EntitlementError(
+      `Articulation training session limit reached (${limits.maxMonthlyArticulationSessions} on your current plan). Upgrade for more.`,
     );
   }
 }

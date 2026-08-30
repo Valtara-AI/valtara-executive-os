@@ -1,5 +1,5 @@
 {
-  "name": "@vex-os/audit",
+  "name": "@nyxor/audit",
   "version": "0.1.0",
   "private": true,
   "description": "Append-only, chain-hashed audit logging service (SAD §4.6 / SEC-001 §6)",
@@ -10,8 +10,8 @@
     "typecheck": "tsc --build"
   },
   "dependencies": {
-    "@vex-os/database": "*",
-    "@vex-os/shared": "*",
+    "@nyxor/database": "*",
+    "@nyxor/shared": "*",
     "drizzle-orm": "^0.45.2"
   }
 }

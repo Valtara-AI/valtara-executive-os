@@ -6,13 +6,18 @@
 // before it's persisted.
 
 import { z } from "zod";
-import { MAX_ONBOARDING_AGENTS, MIN_ONBOARDING_AGENTS } from "@vex-os/shared";
+import {
+  MAX_ONBOARDING_AGENTS,
+  MAX_TOPICS_OF_INTEREST,
+  MIN_ONBOARDING_AGENTS,
+} from "@nyxor/shared";
 
 export const ProfileExtractionSchema = z.object({
   timeDrains: z.array(z.string()).min(1),
   delegationCandidates: z.array(z.string()).min(1),
   communicationStyle: z.string(),
   tools: z.array(z.string()),
+  topicsOfInterest: z.array(z.string()).max(MAX_TOPICS_OF_INTEREST),
 });
 export type ProfileExtraction = z.infer<typeof ProfileExtractionSchema>;
 

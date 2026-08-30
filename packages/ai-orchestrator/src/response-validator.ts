@@ -5,7 +5,7 @@
 // marked failed."
 
 import type { ZodType } from "zod";
-import { MAX_LLM_RESPONSE_RETRIES } from "@vex-os/shared";
+import { MAX_LLM_RESPONSE_RETRIES } from "@nyxor/shared";
 import type { InferenceProvider, InferenceRequest } from "./types.js";
 
 export class ResponseValidationError extends Error {

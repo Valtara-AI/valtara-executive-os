@@ -4,14 +4,10 @@
 
 import { Hono } from "hono";
 import { eq } from "drizzle-orm";
-import { getDb, schema } from "@vex-os/database";
-import {
-  createBillingPortalSession,
-  createCheckoutSession,
-  getEntitlements,
-} from "@vex-os/billing";
+import { getDb, schema } from "@nyxor/database";
+import { createBillingPortalSession, createCheckoutSession, getEntitlements } from "@nyxor/billing";
 import { z } from "zod";
-import { fail, ok } from "@vex-os/shared";
+import { fail, ok } from "@nyxor/shared";
 import type { AuthedVariables } from "../middleware/jwt.js";
 import { requireRole } from "../middleware/rbac.js";
 import { resolveExecutive } from "../domains/onboarding/resolve-executive.js";

@@ -15,7 +15,7 @@ const STEPS = [
   {
     icon: Sparkles,
     title: "Your agent workforce",
-    description: "vexOS proposes a set of agents matched to your role — you review and confirm.",
+    description: "Nyxor proposes a set of agents matched to your role — you review and confirm.",
   },
   {
     icon: Users,
@@ -34,7 +34,7 @@ export function HowItWorks() {
     <section id="how-it-works" className="bg-background py-24">
       <div className="mx-auto max-w-6xl px-6">
         <Reveal className="mx-auto max-w-2xl text-center">
-          <h2 className="font-display text-3xl font-bold tracking-tight">How vexOS works</h2>
+          <h2 className="font-display text-3xl font-bold tracking-tight">How Nyxor works</h2>
         </Reveal>
 
         <div className="mt-16 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">

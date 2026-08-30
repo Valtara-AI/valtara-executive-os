@@ -9,7 +9,7 @@ export function SiteFooter() {
         <div className="flex flex-col gap-2">
           <Link href="/" className="flex items-center gap-2">
             <Logo variant="mark" className="h-6 w-6" />
-            <span className="font-display font-semibold">vexOS</span>
+            <span className="font-display font-semibold">Nyxor</span>
           </Link>
           <p className="text-sm text-muted-foreground">
             Valtara Inc., Saskatoon, Saskatchewan, Canada

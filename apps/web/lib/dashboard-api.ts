@@ -6,7 +6,7 @@ import type {
   MorningBrief,
   Task,
   TaskOutput,
-} from "@vex-os/shared";
+} from "@nyxor/shared";
 import { apiFetch } from "./api-client";
 
 export interface DashboardSummary {
@@ -27,6 +27,7 @@ export interface ExecutiveProfile {
     timeDrains: string[];
     delegationCandidates: string[];
     tools: string[];
+    topicsOfInterest: string[];
   } | null;
   voiceProfile: { tone: string | null } | null;
   agentWorkforceSummary: { total: number; active: number };
@@ -40,8 +41,45 @@ export function getExecutiveProfile(accessToken: string): Promise<ExecutiveProfi
   return apiFetch("/api/v1/executive/profile", accessToken);
 }
 
+export function updateTopicsOfInterest(
+  accessToken: string,
+  topicsOfInterest: string[],
+): Promise<ExecutiveProfile["intelligenceProfile"]> {
+  return apiFetch("/api/v1/executive/profile", accessToken, {
+    method: "PATCH",
+    body: JSON.stringify({ topicsOfInterest }),
+  });
+}
+
 export function getTodaysBrief(accessToken: string): Promise<MorningBrief | null> {
   return apiFetch("/api/v1/briefs/today", accessToken);
+}
+
+export interface WatchlistItem {
+  id: string;
+  executiveId: string;
+  ticker: string;
+  label: string | null;
+  createdAt: string;
+}
+
+export function listWatchlist(accessToken: string): Promise<WatchlistItem[]> {
+  return apiFetch("/api/v1/executive/watchlist", accessToken);
+}
+
+export function addWatchlistItem(
+  accessToken: string,
+  ticker: string,
+  label?: string,
+): Promise<WatchlistItem> {
+  return apiFetch("/api/v1/executive/watchlist", accessToken, {
+    method: "POST",
+    body: JSON.stringify({ ticker, label }),
+  });
+}
+
+export function removeWatchlistItem(accessToken: string, itemId: string): Promise<WatchlistItem> {
+  return apiFetch(`/api/v1/executive/watchlist/${itemId}`, accessToken, { method: "DELETE" });
 }
 
 export function listTasks(accessToken: string): Promise<Task[]> {

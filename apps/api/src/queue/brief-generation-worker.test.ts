@@ -3,8 +3,8 @@
 
 import { afterAll, afterEach, describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
-import { getDb, schema } from "@vex-os/database";
-import { MockProvider } from "@vex-os/ai-orchestrator";
+import { getDb, schema } from "@nyxor/database";
+import { MockProvider } from "@nyxor/ai-orchestrator";
 import { enqueueBriefGeneration, getBriefGenerationQueue } from "./brief-generation-queue.js";
 import { createBriefGenerationWorker } from "./brief-generation-worker.js";
 import { localDateString } from "../domains/morning-brief/generate-brief.js";

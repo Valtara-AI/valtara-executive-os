@@ -1,6 +1,6 @@
 import { afterAll, afterEach, describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
-import { getDb, schema } from "@vex-os/database";
+import { getDb, schema } from "@nyxor/database";
 import { isInGenerationWindow, scheduleDueBriefs } from "./schedule-briefs.js";
 import { getBriefGenerationQueue } from "../../queue/brief-generation-queue.js";
 

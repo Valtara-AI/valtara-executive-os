@@ -6,7 +6,7 @@
 
 import { timingSafeEqual } from "node:crypto";
 import type { Context, Next } from "hono";
-import { fail } from "@vex-os/shared";
+import { fail } from "@nyxor/shared";
 
 function safeEqual(a: string, b: string): boolean {
   const bufA = Buffer.from(a);

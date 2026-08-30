@@ -23,7 +23,7 @@
 // (inbound receiver) not built here - deliberately scoped out to a
 // follow-on phase rather than bolted on now.
 
-import { getDb, schema } from "@vex-os/database";
+import { getDb, schema } from "@nyxor/database";
 import type {
   AuthorizationRequest,
   HitlGatedWriteContext,

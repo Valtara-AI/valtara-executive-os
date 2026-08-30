@@ -9,8 +9,9 @@
 
 import { Hono } from "hono";
 import { desc, eq } from "drizzle-orm";
-import { getDb, schema } from "@vex-os/database";
-import { ok } from "@vex-os/shared";
+import { z } from "zod";
+import { getDb, schema } from "@nyxor/database";
+import { MAX_TOPICS_OF_INTEREST, fail, ok } from "@nyxor/shared";
 import type { AuthedVariables } from "../middleware/jwt.js";
 import { requireRole } from "../middleware/rbac.js";
 import { resolveExecutive } from "../domains/onboarding/resolve-executive.js";
@@ -53,4 +54,53 @@ executiveProfileRoute.get("/", async (c) => {
       },
     }),
   );
+});
+
+const UpdateProfileSchema = z.object({
+  topicsOfInterest: z.array(z.string()).max(MAX_TOPICS_OF_INTEREST),
+});
+
+// Inserts a new *version* row rather than updating in place, consistent with
+// executiveIntelligenceProfiles.version and the orderBy(desc(version)).limit(1)
+// read convention used here and in generate-brief.ts. Unlike the other
+// profile fields (set once at onboarding, never re-edited), topicsOfInterest
+// is expected to drift over time - this is the only writer of it post-onboarding.
+executiveProfileRoute.patch("/", async (c) => {
+  const { id } = await resolveExecutive(c.get("user"));
+  const db = getDb();
+
+  const parsed = UpdateProfileSchema.safeParse(await c.req.json());
+  if (!parsed.success) {
+    return c.json(
+      fail("VALIDATION_ERROR", "Invalid request body.", { issues: parsed.error.issues }),
+      400,
+    );
+  }
+
+  const [latest] = await db
+    .select()
+    .from(schema.executiveIntelligenceProfiles)
+    .where(eq(schema.executiveIntelligenceProfiles.executiveId, id))
+    .orderBy(desc(schema.executiveIntelligenceProfiles.version))
+    .limit(1);
+  if (!latest) {
+    return c.json(
+      fail("NOT_FOUND", "No intelligence profile exists yet - complete onboarding first."),
+      404,
+    );
+  }
+
+  const [updated] = await db
+    .insert(schema.executiveIntelligenceProfiles)
+    .values({
+      executiveId: id,
+      version: latest.version + 1,
+      timeDrains: latest.timeDrains,
+      delegationCandidates: latest.delegationCandidates,
+      communicationStyle: latest.communicationStyle,
+      tools: latest.tools,
+      topicsOfInterest: parsed.data.topicsOfInterest,
+    })
+    .returning();
+  return c.json(ok(updated));
 });

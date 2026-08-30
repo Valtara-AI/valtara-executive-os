@@ -12,15 +12,11 @@
 // latter doesn't exist until Sprint 4+'s integration adapters.
 
 import { and, eq, ne } from "drizzle-orm";
-import { getDb, schema } from "@vex-os/database";
-import {
-  getInferenceProvider,
-  renderPrompt,
-  type InferenceProvider,
-} from "@vex-os/ai-orchestrator";
-import { logTaskEvent } from "@vex-os/audit";
-import { sendHitlReviewNotification, sendTaskCompleteNotification } from "@vex-os/notifications";
-import type { HitlMode } from "@vex-os/shared";
+import { getDb, schema } from "@nyxor/database";
+import { getInferenceProvider, renderPrompt, type InferenceProvider } from "@nyxor/ai-orchestrator";
+import { logTaskEvent } from "@nyxor/audit";
+import { sendHitlReviewNotification, sendTaskCompleteNotification } from "@nyxor/notifications";
+import type { HitlMode } from "@nyxor/shared";
 import { logger } from "../../logger.js";
 
 // Fire-and-forget by design: a failed notification (missing RESEND_API_KEY,

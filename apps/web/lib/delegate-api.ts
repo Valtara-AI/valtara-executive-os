@@ -1,4 +1,4 @@
-import type { DelegateLink } from "@vex-os/shared";
+import type { DelegateLink } from "@nyxor/shared";
 import { apiFetch } from "./api-client";
 
 export function listPendingInvitations(accessToken: string): Promise<DelegateLink[]> {

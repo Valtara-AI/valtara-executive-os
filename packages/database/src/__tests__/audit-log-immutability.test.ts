@@ -1,11 +1,11 @@
 // Verifies the concrete DB-level expression of SEC-001 §6 "Immutability"
 // (see src/migrations/0001_hitl_enforcement.sql and 0006_app_role_
 // privilege_separation.sql): audit_log_entries can't be tampered with by
-// the role the application actually connects as (VEX-OS-ETP-001 TC-SEC-06).
+// the role the application actually connects as (NYXOR-ETP-001 TC-SEC-06).
 // There are two independent layers, and Postgres evaluates them in a
 // specific order that changes what "blocked" looks like:
 //
-//  1. Table-level GRANT/REVOKE, checked first. vexos_app has UPDATE/DELETE
+//  1. Table-level GRANT/REVOKE, checked first. nyxor_app has UPDATE/DELETE
 //     explicitly revoked on this table (0006_...sql) - so for that role,
 //     the command never even starts: it throws "permission denied for
 //     table audit_log_entries" immediately.
@@ -24,7 +24,7 @@
 // postgres services do - discovered when this test's first version
 // (assuming RLS-only, no REVOKE yet) passed locally but genuinely failed
 // in CI for exactly this reason. DATABASE_URL is expected to point at
-// vexos_app (not the bootstrap role) in every environment now - see
+// nyxor_app (not the bootstrap role) in every environment now - see
 // .env.example - so the superuser branch below exists to document what
 // happens if that expectation is ever violated, not because it's a
 // supported configuration.
@@ -57,14 +57,14 @@ describe.skipIf(!hasDb)("audit_log_entries immutability", () => {
     if (isSuperuser) {
       console.warn(
         "[audit-log-immutability] Connected as a superuser - bypasses both the table-level " +
-          "REVOKE and row-level security unconditionally. DATABASE_URL should point at vexos_app " +
+          "REVOKE and row-level security unconditionally. DATABASE_URL should point at nyxor_app " +
           "instead (see .env.example) - asserting the bypass rather than a guarantee this " +
           "connection can't actually prove.",
       );
     } else if (hasUpdateGrant) {
       console.warn(
         "[audit-log-immutability] Connected as a role that still holds UPDATE/DELETE grants on " +
-          "audit_log_entries (expected only for vexos_app, whose migration revokes them) - " +
+          "audit_log_entries (expected only for nyxor_app, whose migration revokes them) - " +
           "falling back to proving the row-level security layer alone.",
       );
     }
@@ -93,7 +93,7 @@ describe.skipIf(!hasDb)("audit_log_entries immutability", () => {
     const inserted = await insertRow("original_action");
 
     if (!isSuperuser && !hasUpdateGrant) {
-      // vexos_app's real configuration: blocked at the grant layer,
+      // nyxor_app's real configuration: blocked at the grant layer,
       // before RLS is even relevant.
       await expectDbErrorMessage(
         db

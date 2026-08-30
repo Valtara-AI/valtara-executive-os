@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { fail } from "@vex-os/shared";
+import { fail } from "@nyxor/shared";
 import type { AuthedVariables } from "./middleware/jwt.js";
 import { jwtMiddleware } from "./middleware/jwt.js";
 import { errorHandler } from "./middleware/error-handler.js";
@@ -17,9 +17,12 @@ import { internalRoute } from "./routes/internal.js";
 import { briefsRoute } from "./routes/briefs.js";
 import { dashboardRoute } from "./routes/dashboard.js";
 import { executiveProfileRoute } from "./routes/executive-profile.js";
+import { watchlistRoute } from "./routes/watchlist.js";
 import { integrationsRoute, integrationsCallbackRoute } from "./routes/integrations.js";
 import { complianceRoute } from "./routes/compliance.js";
 import { billingRoute } from "./routes/billing.js";
+import { personalDevelopmentRoute } from "./routes/personal-development.js";
+import { articulationTrainingRoute } from "./routes/articulation-training.js";
 import { webhooksRoute } from "./routes/webhooks.js";
 
 // API-001 §2.1: base URL /api/v1/, all endpoints require authentication
@@ -49,6 +52,7 @@ export function createApp() {
   v1.route("/executive/onboarding", onboardingRoute);
   v1.route("/executive/delegates", executiveDelegatesRoute);
   v1.route("/executive/profile", executiveProfileRoute);
+  v1.route("/executive/watchlist", watchlistRoute);
 
   v1.use("/agents/*", jwtMiddleware, generalRateLimit);
   v1.route("/agents", agentsRoute);
@@ -64,6 +68,12 @@ export function createApp() {
 
   v1.use("/briefs/*", jwtMiddleware, generalRateLimit);
   v1.route("/briefs", briefsRoute);
+
+  v1.use("/personal-development/*", jwtMiddleware, generalRateLimit);
+  v1.route("/personal-development", personalDevelopmentRoute);
+
+  v1.use("/articulation-training/*", jwtMiddleware, generalRateLimit);
+  v1.route("/articulation-training", articulationTrainingRoute);
 
   v1.use("/dashboard/*", jwtMiddleware, generalRateLimit);
   v1.route("/dashboard", dashboardRoute);

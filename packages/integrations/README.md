@@ -1,4 +1,4 @@
-# @vex-os/integrations
+# @nyxor/integrations
 
 Gmail + Google Calendar landed Sprint 4. Outlook Mail + Calendar landed Sprint 5. Slack landed
 Sprint 6 - all three integrations in the CLAUDE.md Sprint Plan are now built. Microsoft Teams and
@@ -8,7 +8,7 @@ integration after DocSend was rejected for unverifiable API documentation.
 
 ## Contract
 
-Every adapter implements `IntegrationAdapter` (`src/types.ts`), per VEX-OS-SAD-001 §4.4:
+Every adapter implements `IntegrationAdapter` (`src/types.ts`), per NYXOR-SAD-001 §4.4:
 
 ```typescript
 interface IntegrationAdapter {
@@ -66,7 +66,7 @@ is meaningful extra complexity not justified by this system's actual Slack call 
 if a future workforce use case drives sustained near-limit traffic.
 
 Read operations are deliberately scoped to what a caller asks for (a search query, a time
-range) — no bulk historical mailbox/calendar download into VEX-OS storage (API-001 §3.1's data
+range) — no bulk historical mailbox/calendar download into NYXOR storage (API-001 §3.1's data
 minimization requirement).
 
 **`PandaDocAdapter`** (provider `"pandadoc"`) follows the same create-draft/send split as Gmail,
@@ -83,5 +83,5 @@ receiver - a genuinely new architectural pattern (every adapter here is pull/pol
 deliberately not built in this phase.
 
 Each integration uses the provider's published REST API (API-first policy, DL-ARCH-003). Any
-proposed MCP-based exception requires a logged entry in VEX-OS-API-001 §6 with CAO approval
+proposed MCP-based exception requires a logged entry in NYXOR-API-001 §6 with CAO approval
 before implementation.

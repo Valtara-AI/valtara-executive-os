@@ -2,9 +2,9 @@
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { eq } from "drizzle-orm";
-import { getDb, schema } from "@vex-os/database";
-import { MockProvider } from "@vex-os/ai-orchestrator";
-import { saveTokens } from "@vex-os/integrations";
+import { getDb, schema } from "@nyxor/database";
+import { MockProvider } from "@nyxor/ai-orchestrator";
+import { saveTokens } from "@nyxor/integrations";
 import { ExecutiveNotFoundError, generateBrief, localDateString } from "./generate-brief.js";
 
 const hasDb = Boolean(process.env.DATABASE_URL) && Boolean(process.env.DB_ENCRYPTION_KEY);
@@ -301,6 +301,121 @@ describe.skipIf(!hasDb)("generateBrief", () => {
     } finally {
       vi.unstubAllGlobals();
     }
+  });
+
+  it("includes a Portfolio section when the executive has a watchlist", async () => {
+    const db = getDb();
+    const executive = await makeExecutive();
+    await db
+      .insert(schema.portfolioWatchlistItems)
+      .values({ executiveId: executive.id, ticker: "AAPL" });
+
+    process.env.ALPHA_VANTAGE_API_KEY = "test-key";
+    process.env.NEWS_API_KEY = "test-key";
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockImplementation((url: string) => {
+        if (url.includes("alphavantage.co")) {
+          return Promise.resolve({
+            ok: true,
+            json: () =>
+              Promise.resolve({
+                "Global Quote": {
+                  "01. symbol": "AAPL",
+                  "05. price": "227.50",
+                  "10. change percent": "1.23%",
+                  "07. latest trading day": "2026-03-15",
+                },
+              }),
+          });
+        }
+        if (url.includes("newsapi.org")) {
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve({ status: "ok", articles: [] }),
+          });
+        }
+        throw new Error(`Unexpected fetch to ${url}`);
+      }),
+    );
+
+    const provider = new MockProvider();
+    provider.enqueue("Brief with portfolio.");
+
+    try {
+      const brief = await generateBrief(executive.id, provider);
+      expect((brief.sectionsJson as { portfolioTickerCount: number }).portfolioTickerCount).toBe(1);
+      expect(provider.calls[0]?.systemPrompt).toContain("AAPL: $227.50 (+1.23%)");
+    } finally {
+      vi.unstubAllGlobals();
+      delete process.env.ALPHA_VANTAGE_API_KEY;
+      delete process.env.NEWS_API_KEY;
+    }
+  });
+
+  it("filters Breaking News by the executive's topics of interest", async () => {
+    const db = getDb();
+    const executive = await makeExecutive();
+    await db.insert(schema.executiveIntelligenceProfiles).values({
+      executiveId: executive.id,
+      version: 1,
+      topicsOfInterest: ["semiconductor industry"],
+    });
+
+    process.env.ALPHA_VANTAGE_API_KEY = "test-key";
+    process.env.NEWS_API_KEY = "test-key";
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockImplementation((url: string) => {
+        if (url.includes("newsapi.org")) {
+          expect(decodeURIComponent(url)).toContain("semiconductor industry");
+          return Promise.resolve({
+            ok: true,
+            json: () =>
+              Promise.resolve({
+                status: "ok",
+                articles: [
+                  {
+                    title: "Chipmaker beats earnings",
+                    description: "d",
+                    url: "https://example.com",
+                    source: { name: "Example" },
+                    publishedAt: "2026-03-15T12:00:00Z",
+                  },
+                ],
+              }),
+          });
+        }
+        throw new Error(`Unexpected fetch to ${url}`);
+      }),
+    );
+
+    const provider = new MockProvider();
+    provider.enqueue("Brief with news.");
+
+    try {
+      const brief = await generateBrief(executive.id, provider);
+      expect((brief.sectionsJson as { newsHeadlineCount: number }).newsHeadlineCount).toBe(1);
+      expect(provider.calls[0]?.systemPrompt).toContain("Chipmaker beats earnings");
+    } finally {
+      vi.unstubAllGlobals();
+      delete process.env.ALPHA_VANTAGE_API_KEY;
+      delete process.env.NEWS_API_KEY;
+    }
+  });
+
+  it("degrades gracefully when the market-data/news APIs are unreachable, brief still generates", async () => {
+    const executive = await makeExecutive();
+    delete process.env.ALPHA_VANTAGE_API_KEY;
+    delete process.env.NEWS_API_KEY;
+
+    const provider = new MockProvider();
+    provider.enqueue("Brief without portfolio/news due to missing API keys.");
+
+    const brief = await generateBrief(executive.id, provider);
+    expect(brief.content).toBe("Brief without portfolio/news due to missing API keys.");
+    expect((brief.sectionsJson as { portfolioTickerCount: number }).portfolioTickerCount).toBe(0);
+    expect((brief.sectionsJson as { newsHeadlineCount: number }).newsHeadlineCount).toBe(0);
   });
 
   it("degrades gracefully (empty sections, brief still generates) when a Google API call fails", async () => {

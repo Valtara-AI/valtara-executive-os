@@ -5,9 +5,9 @@
 
 import { eq } from "drizzle-orm";
 import { Worker, type Job } from "bullmq";
-import { getDb, schema } from "@vex-os/database";
-import { logTaskEvent } from "@vex-os/audit";
-import type { InferenceProvider } from "@vex-os/ai-orchestrator";
+import { getDb, schema } from "@nyxor/database";
+import { logTaskEvent } from "@nyxor/audit";
+import type { InferenceProvider } from "@nyxor/ai-orchestrator";
 import { getRedisConnection } from "./connection.js";
 import { AGENT_TASK_QUEUE_NAME, type AgentTaskJobData } from "./agent-task-queue.js";
 import { executeTask } from "../domains/tasks/execute-task.js";

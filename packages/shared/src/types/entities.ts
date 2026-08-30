@@ -1,4 +1,4 @@
-// Core data entity types. Field lists are authoritative from VEX-OS-SRS-001
+// Core data entity types. Field lists are authoritative from NYXOR-SRS-001
 // §5.1 and CLAUDE.md "Key Data Entities". Keep in sync with the Drizzle
 // schema in packages/database/src/schema/*.ts — that package is the source
 // of truth for column types/constraints; these are the shapes consumed by
@@ -33,6 +33,7 @@ export interface ExecutiveIntelligenceProfile {
   delegationCandidates: string[];
   communicationStyle: string | null;
   tools: string[];
+  topicsOfInterest: string[];
   createdAt: string;
 }
 
@@ -99,7 +100,7 @@ export interface HitlQueueItem {
   actionedBy: string | null;
 }
 
-// Field set follows VEX-OS-SAD-001 §4.6 (audit-layer spec), which is more
+// Field set follows NYXOR-SAD-001 §4.6 (audit-layer spec), which is more
 // detailed than the SRS §5.1 entity summary and is treated as authoritative
 // for implementation: hash-referenced input/output rather than raw
 // snapshots, plus chain-integrity fields (SEC-001 §6). SRS's ip_address
@@ -127,6 +128,60 @@ export interface MorningBrief {
   sectionsJson: Record<string, unknown>;
   generatedAt: string;
   readAt: string | null;
+}
+
+export interface PortfolioWatchlistItem {
+  id: string;
+  executiveId: string;
+  ticker: string;
+  label: string | null;
+  createdAt: string;
+}
+
+export type PersonalDevRecommendationType = "book" | "podcast" | "publication";
+export type PersonalDevRecommendationStatus =
+  "suggested" | "in_progress" | "completed" | "dismissed";
+
+export interface PersonalDevelopmentRecommendation {
+  id: string;
+  executiveId: string;
+  type: PersonalDevRecommendationType;
+  title: string;
+  creator: string | null;
+  rationale: string;
+  status: PersonalDevRecommendationStatus;
+  recommendedAt: string;
+  statusUpdatedAt: string | null;
+}
+
+export type ArticulationSessionType = "speech" | "pitch" | "presentation" | "deal_close";
+export type ArticulationInputMode = "text" | "audio";
+
+export interface ArticulationSessionFeedback {
+  clarityScore: number;
+  structureScore: number;
+  persuasivenessScore: number;
+  toneScore: number;
+  fillerPhrases: string[];
+  strengths: string[];
+  rewriteSuggestions: { original: string; suggested: string; reason: string }[];
+  overallFeedback: string;
+}
+
+export interface ArticulationSession {
+  id: string;
+  executiveId: string;
+  sessionType: ArticulationSessionType;
+  inputMode: ArticulationInputMode;
+  inputText: string;
+  audioStoragePath: string | null;
+  audioDurationSeconds: number | null;
+  feedbackJson: ArticulationSessionFeedback;
+  clarityScore: number;
+  structureScore: number;
+  persuasivenessScore: number;
+  toneScore: number;
+  createdAt: string;
 }
 
 export interface IntegrationToken {

@@ -12,7 +12,8 @@ Respond with ONLY a JSON object matching exactly this shape, no other text:
   "timeDrains": string[],           // 3-6 specific activities consuming the executive's time that do NOT require their unique judgment
   "delegationCandidates": string[], // at least 3 concrete tasks/workflows suitable for delegation to an AI agent, derived from the time drains
   "communicationStyle": string,     // one sentence summarizing how they communicate (e.g. "direct and data-driven, prefers bullet points over prose")
-  "tools": string[]                 // tools/platforms mentioned or implied (e.g. "Google Workspace", "Slack", "Salesforce")
+  "tools": string[],                // tools/platforms mentioned or implied (e.g. "Google Workspace", "Slack", "Salesforce")
+  "topicsOfInterest": string[]      // 0-10 industries, companies, or topics they said they want to stay on top of in the news - empty array if they didn't name any, never invented
 }
 
-Base every field strictly on what the executive actually said in the transcript. Do not invent tools, time drains, or delegation candidates that were not mentioned or clearly implied.
+Base every field strictly on what the executive actually said in the transcript. Do not invent tools, time drains, delegation candidates, or topics of interest that were not mentioned or clearly implied.

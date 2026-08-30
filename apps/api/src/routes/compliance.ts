@@ -8,8 +8,8 @@
 import { randomUUID } from "node:crypto";
 import { Hono } from "hono";
 import { z } from "zod";
-import { fail } from "@vex-os/shared";
-import { logTaskEvent } from "@vex-os/audit";
+import { fail } from "@nyxor/shared";
+import { logTaskEvent } from "@nyxor/audit";
 import type { AuthedVariables } from "../middleware/jwt.js";
 import { requireRole } from "../middleware/rbac.js";
 import {
@@ -79,12 +79,12 @@ complianceRoute.get("/audit-export", async (c) => {
   if (format === "csv") {
     return c.body(serializeForCsvExport(rows), 200, {
       "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": `attachment; filename="vex-os-audit-export-${filenameDate}.csv"`,
+      "Content-Disposition": `attachment; filename="nyxor-audit-export-${filenameDate}.csv"`,
     });
   }
 
   return c.body(JSON.stringify(serializeForJsonExport(rows), null, 2), 200, {
     "Content-Type": "application/json; charset=utf-8",
-    "Content-Disposition": `attachment; filename="vex-os-audit-export-${filenameDate}.json"`,
+    "Content-Disposition": `attachment; filename="nyxor-audit-export-${filenameDate}.json"`,
   });
 });

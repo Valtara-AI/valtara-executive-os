@@ -10,7 +10,7 @@
 // Opus 5 $5/$25 per million input/output tokens, Sonnet 5 $2/$10
 // (introductory, through 2026-08-31; $3/$15 standard from 2026-09-01),
 // Haiku 4.5 $1/$5, Fable 5 $10/$50. OpenAI/Google model IDs aren't priced
-// here yet - VEX-OS-DL-001's LLM_PROVIDER default is Anthropic and no
+// here yet - NYXOR-DL-001's LLM_PROVIDER default is Anthropic and no
 // pilot customer has configured another provider so far.
 
 export interface ModelRate {

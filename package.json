@@ -1,8 +1,8 @@
 {
-  "name": "valtara-executive-os",
+  "name": "nyxor",
   "version": "0.1.0",
   "private": true,
-  "description": "Valtara Executive OS (VEX-OS) — AI-powered Executive Operating System",
+  "description": "Nyxor — AI-powered Executive Operating System",
   "workspaces": [
     "apps/*",
     "packages/*"

@@ -3,8 +3,8 @@
 
 import { afterEach, describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
-import { getDb, schema } from "@vex-os/database";
-import { MockProvider, type InferenceProvider } from "@vex-os/ai-orchestrator";
+import { getDb, schema } from "@nyxor/database";
+import { MockProvider, type InferenceProvider } from "@nyxor/ai-orchestrator";
 import { executeTask, TaskNotFoundError } from "./execute-task.js";
 
 const hasDb = Boolean(process.env.DATABASE_URL);

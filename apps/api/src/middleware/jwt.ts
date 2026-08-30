@@ -7,8 +7,8 @@
 
 import type { Context, Next } from "hono";
 import { importSPKI, jwtVerify } from "jose";
-import type { JwtPayload } from "@vex-os/shared";
-import { fail } from "@vex-os/shared";
+import type { JwtPayload } from "@nyxor/shared";
+import { fail } from "@nyxor/shared";
 import { logger } from "../logger.js";
 
 let cachedPublicKey: Awaited<ReturnType<typeof importSPKI>> | undefined;

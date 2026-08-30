@@ -9,8 +9,8 @@
 // security boundary" — this middleware is the actual boundary.
 
 import type { Context, Next } from "hono";
-import type { Role } from "@vex-os/shared";
-import { fail } from "@vex-os/shared";
+import type { Role } from "@nyxor/shared";
+import { fail } from "@nyxor/shared";
 import type { AuthedVariables } from "./jwt.js";
 
 export function requireRole(...allowedRoles: Role[]) {

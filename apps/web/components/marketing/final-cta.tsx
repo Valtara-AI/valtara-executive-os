@@ -14,14 +14,14 @@ export function FinalCta() {
           Run your company. Not your chaos.
         </h2>
         <p className="text-muted-foreground">
-          Meet vexOS — the Executive Operating System built for leaders who operate at scale.
+          Meet Nyxor — the Executive Operating System built for leaders who operate at scale.
         </p>
         <div className="flex flex-col gap-3 sm:flex-row">
           <Button size="lg" asChild>
             <a href="/api/auth/signin">Start free trial</a>
           </Button>
           <Button size="lg" variant="outline" asChild>
-            <a href="mailto:fcogbogu@gmail.com?subject=vexOS%20Demo%20Request">Talk to us</a>
+            <a href="mailto:fcogbogu@gmail.com?subject=Nyxor%20Demo%20Request">Talk to us</a>
           </Button>
         </div>
       </Reveal>

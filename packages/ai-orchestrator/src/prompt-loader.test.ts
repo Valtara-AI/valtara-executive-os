@@ -22,7 +22,7 @@ describe("renderPrompt", () => {
       executiveName: "Jordan Ellis",
     });
     expect(result).toContain("Executive so far: Jordan Ellis");
-    expect(result).toContain("VEX-OS Onboarding Agent");
+    expect(result).toContain("NYXOR Onboarding Agent");
   });
 
   it("renders onboarding/profile-extraction.v1.hbs with a transcript loop", async () => {

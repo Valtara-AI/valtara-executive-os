@@ -52,7 +52,7 @@ export const subscriptionTierEnum = pgEnum("subscription_tier", ["starter", "pro
 
 // Mirrors Stripe Subscription's own status values (a subset - Stripe has a
 // few more edge-case statuses like "unpaid"/"paused" not distinguished
-// here, all folded into "past_due"/"canceled" for VEX-OS's own gating
+// here, all folded into "past_due"/"canceled" for NYXOR's own gating
 // purposes since the entitlement outcome is the same either way).
 export const subscriptionStatusEnum = pgEnum("subscription_status", [
   "trialing",
@@ -61,3 +61,25 @@ export const subscriptionStatusEnum = pgEnum("subscription_status", [
   "canceled",
   "incomplete",
 ]);
+
+export const personalDevRecommendationTypeEnum = pgEnum("personal_dev_recommendation_type", [
+  "book",
+  "podcast",
+  "publication",
+]);
+
+export const personalDevRecommendationStatusEnum = pgEnum("personal_dev_recommendation_status", [
+  "suggested",
+  "in_progress",
+  "completed",
+  "dismissed",
+]);
+
+export const articulationSessionTypeEnum = pgEnum("articulation_session_type", [
+  "speech",
+  "pitch",
+  "presentation",
+  "deal_close",
+]);
+
+export const articulationInputModeEnum = pgEnum("articulation_input_mode", ["text", "audio"]);

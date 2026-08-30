@@ -1,5 +1,5 @@
-// Exact shape from VEX-OS-API-001 §4.1. This is the sole contract every LLM
-// call in VEX-OS goes through (CLAUDE.md non-negotiable #1: MODEL AGNOSTIC).
+// Exact shape from NYXOR-API-001 §4.1. This is the sole contract every LLM
+// call in NYXOR goes through (CLAUDE.md non-negotiable #1: MODEL AGNOSTIC).
 
 export interface InferenceRequest {
   systemPrompt: string;

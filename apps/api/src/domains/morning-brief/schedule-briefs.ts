@@ -15,7 +15,7 @@
 // this only makes correct use of the field once it *is* set.
 
 import { and, eq } from "drizzle-orm";
-import { getDb, schema } from "@vex-os/database";
+import { getDb, schema } from "@nyxor/database";
 import { enqueueBriefGeneration } from "../../queue/brief-generation-queue.js";
 import { localDateString } from "./generate-brief.js";
 

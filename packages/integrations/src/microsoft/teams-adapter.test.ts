@@ -5,7 +5,7 @@
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { eq } from "drizzle-orm";
-import { getDb, schema } from "@vex-os/database";
+import { getDb, schema } from "@nyxor/database";
 import { saveTokens } from "../token-store.js";
 import { TeamsAdapter } from "./teams-adapter.js";
 import { expectDbErrorMessage } from "../test-utils/expect-db-error-message.js";

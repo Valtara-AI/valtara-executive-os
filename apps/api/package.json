@@ -1,8 +1,8 @@
 {
-  "name": "@vex-os/api",
+  "name": "@nyxor/api",
   "version": "0.1.0",
   "private": true,
-  "description": "VEX-OS backend API (Hono, Node.js 20 LTS)",
+  "description": "NYXOR backend API (Hono, Node.js 20 LTS)",
   "type": "module",
   "main": "./src/index.ts",
   "scripts": {
@@ -15,13 +15,13 @@
     "perf:smoke": "tsx src/scripts/perf-smoke-test.ts"
   },
   "dependencies": {
-    "@vex-os/ai-orchestrator": "*",
-    "@vex-os/audit": "*",
-    "@vex-os/billing": "*",
-    "@vex-os/database": "*",
-    "@vex-os/integrations": "*",
-    "@vex-os/notifications": "*",
-    "@vex-os/shared": "*",
+    "@nyxor/ai-orchestrator": "*",
+    "@nyxor/audit": "*",
+    "@nyxor/billing": "*",
+    "@nyxor/database": "*",
+    "@nyxor/integrations": "*",
+    "@nyxor/notifications": "*",
+    "@nyxor/shared": "*",
     "bullmq": "^5.34.5",
     "drizzle-orm": "^0.45.2",
     "ioredis": "^5.4.2",

@@ -1,4 +1,4 @@
-// Matches VEX-OS-API-001 §2.1 exactly: response envelope and pagination shape.
+// Matches NYXOR-API-001 §2.1 exactly: response envelope and pagination shape.
 
 export interface ApiErrorShape {
   code: string;

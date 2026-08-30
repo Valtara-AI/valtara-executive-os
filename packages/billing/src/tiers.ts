@@ -18,6 +18,14 @@ export interface TierLimits {
    * tune against real usage once live traffic exists.
    */
   maxMonthlyCostCents: number;
+  /**
+   * Articulation Training sessions (text or audio, both count the same)
+   * per month. Capped-on-lower-tiers rather than a hard Starter exclusion -
+   * a taste of a differentiating feature drives upgrade intent better than
+   * invisibility. Illustrative figures, same tune-against-real-usage
+   * caveat as maxMonthlyCostCents.
+   */
+  maxMonthlyArticulationSessions: number;
 }
 
 // `Infinity` is a real, intentional value here (not a placeholder) -
@@ -30,6 +38,7 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     maxDelegateSeats: 1,
     maxMonthlyTasks: 200,
     maxMonthlyCostCents: 2000, // $20.00
+    maxMonthlyArticulationSessions: 3,
   },
   pro: {
     maxAgents: 10,
@@ -37,6 +46,7 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     maxDelegateSeats: 5,
     maxMonthlyTasks: 2000,
     maxMonthlyCostCents: 20000, // $200.00
+    maxMonthlyArticulationSessions: 25,
   },
   enterprise: {
     maxAgents: Infinity,
@@ -44,6 +54,7 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     maxDelegateSeats: Infinity,
     maxMonthlyTasks: Infinity,
     maxMonthlyCostCents: Infinity,
+    maxMonthlyArticulationSessions: Infinity,
   },
 };
 

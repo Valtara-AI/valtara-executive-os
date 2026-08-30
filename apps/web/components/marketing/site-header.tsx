@@ -16,7 +16,7 @@ export function SiteHeader() {
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         <Link href="/" className="flex items-center gap-2">
           <Logo variant="mark" priority className="h-8 w-8" />
-          <span className="font-display text-lg font-semibold">vexOS</span>
+          <span className="font-display text-lg font-semibold">Nyxor</span>
         </Link>
 
         <nav className="hidden items-center gap-6 md:flex">

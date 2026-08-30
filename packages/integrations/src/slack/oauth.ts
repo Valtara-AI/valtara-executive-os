@@ -31,7 +31,7 @@ export function buildSlackAuthorizationUrl(scopes: string[], state: string): str
     redirect_uri: redirectUri,
     // "scope" is bot-token scopes (what chat:write/channels:read actually
     // are); Slack's v2 authorize endpoint also accepts "user_scope" for
-    // user-token scopes, which VEX-OS doesn't request.
+    // user-token scopes, which NYXOR doesn't request.
     scope: scopes.join(","),
     state,
   });

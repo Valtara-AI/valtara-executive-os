@@ -28,4 +28,4 @@ Support voice as a first-class interaction: _"VEX, brief me before the board mee
 
 ---
 
-**Implementation note**: VEX-OS has no mobile/PWA surface today (`apps/web`'s `next.config.mjs` has `output: "standalone"` for server deployment, no PWA manifest/service worker). This section describes a future mobile product, not something in scope for the current landing-page/theme-refresh plan.
+**Implementation note**: NYXOR has no mobile/PWA surface today (`apps/web`'s `next.config.mjs` has `output: "standalone"` for server deployment, no PWA manifest/service worker). This section describes a future mobile product, not something in scope for the current landing-page/theme-refresh plan.

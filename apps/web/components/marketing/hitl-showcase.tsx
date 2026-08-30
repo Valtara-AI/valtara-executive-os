@@ -14,7 +14,7 @@ const STEPS = [
   {
     icon: ShieldCheck,
     title: "Held for review",
-    description: "Nothing leaves vexOS. The output sits in your HITL queue, unsent.",
+    description: "Nothing leaves Nyxor. The output sits in your HITL queue, unsent.",
   },
   {
     icon: UserCheck,

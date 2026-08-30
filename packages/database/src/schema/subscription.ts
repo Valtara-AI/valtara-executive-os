@@ -3,7 +3,7 @@ import { subscriptionStatusEnum, subscriptionTierEnum } from "./enums.js";
 import { executives } from "./executive.js";
 
 // DL-ARCH-010: one subscription per executive (each Executive is its own
-// billing tenant - VEX-OS has no separate Organization entity today). Not
+// billing tenant - NYXOR has no separate Organization entity today). Not
 // created until the executive completes Stripe Checkout; see
 // packages/billing/src/entitlements.ts for what "no row yet" means for
 // gating.

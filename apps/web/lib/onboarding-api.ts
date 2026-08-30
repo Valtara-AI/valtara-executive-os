@@ -1,7 +1,7 @@
 // Typed wrappers over API-001 §2.3's onboarding endpoints. Shapes mirror
 // apps/api/src/domains/onboarding/engine.ts's return types exactly.
 
-import type { HitlMode } from "@vex-os/shared";
+import type { HitlMode } from "@nyxor/shared";
 import { apiFetch } from "./api-client";
 
 export interface StartSessionResponse {

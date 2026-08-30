@@ -1,11 +1,12 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { Agent, HitlMode, HitlQueueItem, Task } from "@vex-os/shared";
-import { HITL_MODES } from "@vex-os/shared";
+import type { Agent, HitlMode, HitlQueueItem, Task } from "@nyxor/shared";
+import { HITL_MODES } from "@nyxor/shared";
 import {
   approveHitlItem,
   archiveAgent,
@@ -224,6 +225,15 @@ function DashboardContent() {
           Good morning{session?.user?.name ? `, ${session.user.name}` : ""}.
         </h1>
         <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/articulation-training">Articulation training</Link>
+          </Button>
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/personal-development">Personal development</Link>
+          </Button>
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/settings">Settings</Link>
+          </Button>
           <ThemeToggle />
           <Button variant="outline" size="sm" onClick={() => void signOut()}>
             Sign out

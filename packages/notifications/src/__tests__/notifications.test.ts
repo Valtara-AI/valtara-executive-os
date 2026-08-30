@@ -13,7 +13,7 @@ const sendMock = vi.fn();
 
 vi.mock("../email-client.js", () => ({
   getEmailClient: () => ({ emails: { send: sendMock } }),
-  getFromAddress: () => "VEX-OS <notifications@vex-os.example>",
+  getFromAddress: () => "NYXOR <notifications@nyxor.example>",
 }));
 
 const { sendHitlReviewNotification } = await import("../hitl-review-notification.js");

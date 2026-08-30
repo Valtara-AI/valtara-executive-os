@@ -25,7 +25,7 @@ export async function sendHitlReviewNotification(params: {
       <p>Hi ${escapeHtml(params.executiveName)},</p>
       <p><strong>${escapeHtml(params.agentName)}</strong> completed a task and is waiting on your review:</p>
       <p style="padding:12px;border-left:3px solid #ccc;color:#555;">${escapeHtml(params.taskPrompt)}</p>
-      <p>Review it in your VEX-OS HITL queue.</p>
+      <p>Review it in your NYXOR HITL queue.</p>
     `.trim(),
   });
 }

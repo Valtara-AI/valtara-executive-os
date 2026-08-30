@@ -4,7 +4,7 @@
 
 import { Hono } from "hono";
 import { z } from "zod";
-import { fail, ok } from "@vex-os/shared";
+import { fail, ok } from "@nyxor/shared";
 import { resolveRoleForEmail } from "../domains/delegates/resolve-role-for-email.js";
 
 export const internalRoute = new Hono();

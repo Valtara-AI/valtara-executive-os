@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { HitlMode } from "@vex-os/shared";
+import type { HitlMode } from "@nyxor/shared";
 import type { ProposedAgent } from "@/lib/onboarding-api";
 
 export interface ChatMessage {

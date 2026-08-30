@@ -2,13 +2,13 @@
 
 The supplied logo becomes the **Primary Horizontal Lockup**. Build the full family around it:
 
-- Primary vexOS logo
+- Primary Nyxor logo
 - White/reversed logo
 - Dark monochrome logo
 - Light monochrome logo
-- V Orbit Mark — standalone symbol
-- V App Icon
-- Compact `vexOS` wordmark
+- N Orbit Mark — standalone symbol
+- N App Icon
+- Compact `Nyxor` wordmark
 - Favicon
 - PWA icon
 - AI avatar
@@ -16,7 +16,7 @@ The supplied logo becomes the **Primary Horizontal Lockup**. Build the full fami
 - Watermark
 - Motion logo
 
-The orbital V should become the most valuable independent visual asset.
+The orbital N should become the most valuable independent visual asset.
 
 ## Clear space
 
@@ -25,11 +25,11 @@ Use the diameter of one orbital node as the minimum surrounding clear space.
 ## Avoid
 
 - Don't flatten the gradient into arbitrary rainbow colors
-- Don't distort the V
+- Don't distort the N
 - Don't remove orbital elements from the official symbol
 - Don't add shadows behind the full logo
 - Don't place the dark wordmark on insufficiently contrasting backgrounds
 
 ---
 
-**Implementation note**: only the Primary Horizontal Lockup exists today (the one image file provided). Everything else in the family above (reversed/monochrome variants, standalone V mark, favicon, app icon, AI avatar, motion logo) needs to be derived from it — not fabricated independently. For the current landing-page plan, only the favicon and the header/footer logo placement are in immediate scope.
+**Implementation note** (updated, DL-PROD-005): the mark itself changed from an orbital "V" (vexOS) to an orbital "N" (Nyxor) with the rebrand - this isn't just a recolor. Built today: the Primary Horizontal Lockup as a light/dark pair (not one image), the standalone N Orbit Mark, and the favicon - see `Branding/README.md`'s "Logo asset" section for exactly which files and how they were derived. Still unbuilt: white/reversed logo, dark/light monochrome variants, PWA app icon, AI avatar, social profile mark, watermark, and motion logo.

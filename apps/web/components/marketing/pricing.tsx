@@ -3,7 +3,7 @@ import { PricingTierCard } from "./pricing-tier-card";
 import { Reveal } from "./reveal";
 
 // Order matches SubscriptionTier's own declaration order in
-// @vex-os/billing/tiers, not alphabetical - starter (Plus) -> pro ->
+// @nyxor/billing/tiers, not alphabetical - starter (Plus) -> pro ->
 // enterprise is the intended left-to-right reading order.
 const TIER_ORDER = ["starter", "pro", "enterprise"] as const;
 

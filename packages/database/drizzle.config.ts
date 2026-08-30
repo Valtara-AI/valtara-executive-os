@@ -2,7 +2,7 @@ import { defineConfig } from "drizzle-kit";
 
 // DL-SEC-004: prefer the privileged migration connection if set - `push`/
 // `introspect` would need DDL rights DATABASE_URL (the restricted
-// vexos_app runtime role) no longer has. `generate` (the only drizzle-kit
+// nyxor_app runtime role) no longer has. `generate` (the only drizzle-kit
 // command actually used day-to-day) diffs schema files against migration
 // history and doesn't touch a live DB either way.
 const connectionString = process.env.DATABASE_MIGRATION_URL ?? process.env.DATABASE_URL;

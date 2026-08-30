@@ -1,8 +1,8 @@
 {
-  "name": "@vex-os/web",
+  "name": "@nyxor/web",
   "version": "0.1.0",
   "private": true,
-  "description": "VEX-OS frontend (Next.js 16 App Router)",
+  "description": "NYXOR frontend (Next.js 16 App Router)",
   "type": "module",
   "scripts": {
     "dev": "next dev",
@@ -11,8 +11,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@vex-os/shared": "*",
-    "@vex-os/billing": "*",
+    "@nyxor/shared": "*",
+    "@nyxor/billing": "*",
     "@radix-ui/react-slot": "^1.1.1",
     "@tanstack/react-query": "^5.62.11",
     "class-variance-authority": "^0.7.1",

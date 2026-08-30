@@ -1,25 +1,25 @@
 services:
   postgres:
     image: pgvector/pgvector:pg15
-    container_name: vex-os-postgres
+    container_name: nyxor-postgres
     restart: unless-stopped
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_DB: vexos
-      POSTGRES_USER: vexos
-      POSTGRES_PASSWORD: vexos_local_dev
+      POSTGRES_DB: nyxor
+      POSTGRES_USER: nyxor
+      POSTGRES_PASSWORD: nyxor_local_dev
     volumes:
-      - vex-os-postgres-data:/var/lib/postgresql/data
+      - nyxor-postgres-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U vexos -d vexos"]
+      test: ["CMD-SHELL", "pg_isready -U nyxor -d nyxor"]
       interval: 5s
       timeout: 5s
       retries: 10
 
   redis:
     image: redis:7-alpine
-    container_name: vex-os-redis
+    container_name: nyxor-redis
     restart: unless-stopped
     ports:
       - "6379:6379"
@@ -30,4 +30,4 @@ services:
       retries: 10
 
 volumes:
-  vex-os-postgres-data:
+  nyxor-postgres-data:

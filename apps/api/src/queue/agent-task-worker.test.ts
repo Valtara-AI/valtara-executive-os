@@ -4,8 +4,8 @@
 
 import { afterAll, afterEach, describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
-import { getDb, schema } from "@vex-os/database";
-import { MockProvider } from "@vex-os/ai-orchestrator";
+import { getDb, schema } from "@nyxor/database";
+import { MockProvider } from "@nyxor/ai-orchestrator";
 import { enqueueAgentTask, getAgentTaskQueue } from "./agent-task-queue.js";
 import { createAgentTaskWorker } from "./agent-task-worker.js";
 

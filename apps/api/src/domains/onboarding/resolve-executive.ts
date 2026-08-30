@@ -1,10 +1,10 @@
 // Resolves the Executive DB row for an authenticated JWT subject, creating
 // one on first access. NextAuth (apps/web) is the identity issuer; this is
-// where that identity gets a corresponding row in VEX-OS's own domain data.
+// where that identity gets a corresponding row in NYXOR's own domain data.
 
 import { eq } from "drizzle-orm";
-import { getDb, schema } from "@vex-os/database";
-import type { JwtPayload } from "@vex-os/shared";
+import { getDb, schema } from "@nyxor/database";
+import type { JwtPayload } from "@nyxor/shared";
 
 export async function resolveExecutive(user: JwtPayload): Promise<{ id: string }> {
   const db = getDb();

@@ -4,9 +4,9 @@
 
 | Token             | Hex       | Primary use                   |
 | ----------------- | --------- | ----------------------------- |
-| Vex Midnight      | `#020A28` | Primary dark background       |
+| Nyxor Midnight    | `#020A28` | Primary dark background       |
 | Executive Navy    | `#061643` | Cards, navigation, dashboards |
-| Vex Blue          | `#064DFF` | Primary actions               |
+| Nyxor Blue        | `#064DFF` | Primary actions               |
 | Orbit Blue        | `#008CFF` | Interactive states / data     |
 | Intelligence Cyan | `#00DDF2` | AI / system signals           |
 | Violet Pulse      | `#6A16FF` | AI accents / gradients        |
@@ -20,7 +20,7 @@
 
 `#00DDF2 → #008CFF → #064DFF → #6A16FF`
 
-This is the **vexOS Intelligence Gradient**. Use it selectively — on the logo, AI states, important metrics, launch graphics, and premium interactions — **not on every UI element**.
+This is the **Nyxor Intelligence Gradient**. Use it selectively — on the logo, AI states, important metrics, launch graphics, and premium interactions — **not on every UI element**.
 
 ## Typography
 

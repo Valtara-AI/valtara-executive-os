@@ -5,7 +5,7 @@
 
 import { Hono } from "hono";
 import { eq } from "drizzle-orm";
-import { getDb, schema } from "@vex-os/database";
+import { getDb, schema } from "@nyxor/database";
 import {
   beginGoogleAuthorization,
   buildGoogleAuthorizationUrl,
@@ -27,16 +27,16 @@ import {
   completePandaDocConnection,
   disconnectPandaDoc,
   isPandaDocConnected,
-} from "@vex-os/integrations";
-import { assertIntegrationAllowed, EntitlementError } from "@vex-os/billing";
-import { fail, ok } from "@vex-os/shared";
+} from "@nyxor/integrations";
+import { assertIntegrationAllowed, EntitlementError } from "@nyxor/billing";
+import { fail, ok } from "@nyxor/shared";
 import type { AuthedVariables } from "../middleware/jwt.js";
 import { jwtMiddleware } from "../middleware/jwt.js";
 import { requireRole } from "../middleware/rbac.js";
 import { generalRateLimit } from "../middleware/rate-limit.js";
 import { resolveExecutive } from "../domains/onboarding/resolve-executive.js";
 import { signOAuthState, verifyOAuthState } from "../domains/integrations/oauth-state.js";
-import { logTaskEvent } from "@vex-os/audit";
+import { logTaskEvent } from "@nyxor/audit";
 
 // Google Sprint 4, Microsoft (Outlook) Sprint 5, Slack Sprint 6, PandaDoc
 // post-launch (DL-ARCH-009).

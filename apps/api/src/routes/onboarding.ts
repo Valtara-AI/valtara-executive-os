@@ -4,7 +4,7 @@
 
 import { Hono } from "hono";
 import { z } from "zod";
-import { fail, ok } from "@vex-os/shared";
+import { fail, ok } from "@nyxor/shared";
 import type { AuthedVariables } from "../middleware/jwt.js";
 import { requireRole } from "../middleware/rbac.js";
 import { llmRateLimit } from "../middleware/rate-limit.js";

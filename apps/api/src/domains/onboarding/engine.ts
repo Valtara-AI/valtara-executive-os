@@ -4,16 +4,16 @@
 
 import { randomUUID } from "node:crypto";
 import { eq } from "drizzle-orm";
-import { getDb, schema } from "@vex-os/database";
+import { getDb, schema } from "@nyxor/database";
 import {
   completeStructured,
   getInferenceProvider,
   renderPrompt,
   type InferenceProvider,
-} from "@vex-os/ai-orchestrator";
-import { logOnboardingEvent } from "@vex-os/audit";
-import type { HitlMode } from "@vex-os/shared";
-import { MIN_ONBOARDING_QUESTIONS } from "@vex-os/shared";
+} from "@nyxor/ai-orchestrator";
+import { logOnboardingEvent } from "@nyxor/audit";
+import type { HitlMode } from "@nyxor/shared";
+import { MIN_ONBOARDING_QUESTIONS } from "@nyxor/shared";
 import { FIRST_QUESTION_ID, QUESTION_BANK } from "./question-bank.js";
 import {
   ProfileExtractionSchema,
@@ -235,6 +235,7 @@ export async function complete(
       delegationCandidates: profileExtraction.delegationCandidates,
       communicationStyle: profileExtraction.communicationStyle,
       tools: profileExtraction.tools,
+      topicsOfInterest: profileExtraction.topicsOfInterest,
     })
     .returning();
   if (!intelligenceProfile) throw new Error("Failed to persist ExecutiveIntelligenceProfile.");

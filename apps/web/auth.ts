@@ -13,7 +13,7 @@ import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
 import MicrosoftEntraID from "next-auth/providers/microsoft-entra-id";
 import { importPKCS8, SignJWT } from "jose";
-import type { Role } from "@vex-os/shared";
+import type { Role } from "@nyxor/shared";
 
 // SEC-001 §3.2 default for a genuinely new user with no Executive row and
 // no delegate invitation anywhere - see resolveRoleForNewSignIn below for
