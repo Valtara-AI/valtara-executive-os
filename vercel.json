@@ -1,5 +1,5 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "installCommand": "npm ci --ignore-scripts",
-  "buildCommand": "npm run build --workspace=apps/web"
+  "buildCommand": "npx tsc --build && npm run build --workspace=apps/web"
 }
