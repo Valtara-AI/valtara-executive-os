@@ -32,6 +32,13 @@ const nextConfig = {
   // actual Vercel deploy, not by the Docker build or local dev/test - both
   // of those only ever exercised the non-Vercel branch.
   ...(process.env.VERCEL ? {} : { output: "standalone" }),
+  // Next.js 16.3 turns this on by default specifically on Vercel, and it
+  // collides with Vercel's own Toolbar comment-patching step during
+  // output deployment ("Cannot patch preview comments when immutable
+  // static file upload is enabled") - confirmed by Vercel support, not
+  // something guessable from the error text alone (which misleadingly
+  // suggests a Next.js version bump, tried first and didn't help).
+  supportsImmutableAssets: false,
   reactStrictMode: true,
   // Next 16 default-scaffolds AGENTS.md/CLAUDE.md into this directory on
   // every dev/build run. This repo already has a real, hand-maintained
