@@ -23,8 +23,15 @@ const nextConfig = {
   turbopack: { root: path.join(__dirname, "../..") },
   // Minimizes the production Docker image (SAD §5: "Docker-deployable
   // backend" / no Vercel dependency) by tracing only the files each route
-  // actually needs into .next/standalone.
-  output: "standalone",
+  // actually needs into .next/standalone. Conditional on NOT running on
+  // Vercel (which always sets VERCEL=1 during its builds): Vercel has its
+  // own serverless packaging pipeline that standalone mode actively
+  // conflicts with - it never produces the per-route next-server.js.nft.json
+  // file Vercel's own build step looks for afterward, since standalone
+  // bundles everything into .next/standalone/ instead. Surfaced only by an
+  // actual Vercel deploy, not by the Docker build or local dev/test - both
+  // of those only ever exercised the non-Vercel branch.
+  ...(process.env.VERCEL ? {} : { output: "standalone" }),
   reactStrictMode: true,
   // Next 16 default-scaffolds AGENTS.md/CLAUDE.md into this directory on
   // every dev/build run. This repo already has a real, hand-maintained

@@ -65,6 +65,7 @@ export default tseslint.config(
       "**/.next/**",
       "**/node_modules/**",
       "**/*.config.js",
+      "**/*.config.mjs",
       "**/*.config.ts",
       "**/coverage/**",
     ],
