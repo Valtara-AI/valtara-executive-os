@@ -9,6 +9,18 @@
 import { migrate } from "drizzle-orm/postgres-js/migrator";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
+import { fileURLToPath } from "node:url";
+import path from "node:path";
+
+// Resolved from this module's own location, not the process's cwd - "./src/
+// migrations" previously only worked because `npm run db:migrate` (an npm
+// workspace script) happens to run with cwd set to packages/database/. That
+// assumption silently breaks the moment the compiled dist/migrate.js is
+// invoked any other way - e.g. a Docker deploy's preDeployCommand running
+// from the repo root - where it fails with "Can't find meta/_journal.json"
+// since "./src/migrations" resolves against the wrong directory entirely.
+// Caught only by an actual deploy attempt, not by any test.
+const MIGRATIONS_FOLDER = path.join(path.dirname(fileURLToPath(import.meta.url)), "migrations");
 
 async function main() {
   const connectionString = process.env.DATABASE_MIGRATION_URL;
@@ -24,7 +36,7 @@ async function main() {
   const db = drizzle(migrationClient);
 
   console.warn("Running migrations...");
-  await migrate(db, { migrationsFolder: "./src/migrations" });
+  await migrate(db, { migrationsFolder: MIGRATIONS_FOLDER });
   console.warn("Migrations complete.");
 
   // Idempotent - safe to re-run on every `db:migrate` invocation, and how
