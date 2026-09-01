@@ -149,6 +149,42 @@ body {
   display: none;
 }
 
+/* Hero background: two of the same --intelligence-gradient blobs (hero.tsx
+   already used one, statically) drifting slowly on independent, offset
+   timings - Branding/18-motion-language.md's "Orbit" (slow rotation) and
+   "Pulse" (scale breathing) named directly, applied to the one place a
+   large ambient background animation actually belongs rather than
+   anywhere in the UI chrome. 20s+ durations and gentle easing keep this
+   in the brand's "sophisticated and restrained" register - a slow drift
+   to notice, not a loop to watch. */
+@keyframes hero-orbit-a {
+  0%,
+  100% {
+    transform: translate3d(-6%, -4%, 0) scale(1) rotate(0deg);
+  }
+  50% {
+    transform: translate3d(6%, 5%, 0) scale(1.18) rotate(10deg);
+  }
+}
+
+@keyframes hero-orbit-b {
+  0%,
+  100% {
+    transform: translate3d(5%, 6%, 0) scale(1.05) rotate(0deg);
+  }
+  50% {
+    transform: translate3d(-6%, -5%, 0) scale(0.88) rotate(-12deg);
+  }
+}
+
+.hero-orb-a {
+  animation: hero-orbit-a 24s ease-in-out infinite;
+}
+
+.hero-orb-b {
+  animation: hero-orbit-b 31s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .marquee-track {
     animation: none;
@@ -158,5 +194,9 @@ body {
   .hover-float:focus-within {
     transition: none;
     transform: none;
+  }
+  .hero-orb-a,
+  .hero-orb-b {
+    animation: none;
   }
 }

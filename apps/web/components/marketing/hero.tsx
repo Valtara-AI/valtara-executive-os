@@ -15,8 +15,16 @@ import { Button } from "@/components/ui/button";
 export function Hero() {
   return (
     <section className="relative overflow-hidden bg-background">
+      {/* Two blobs on independent, offset animation durations (globals.css's
+          hero-orbit-a/b) rather than one - moving in lockstep would read as
+          mechanical; drifting independently reads as ambient. */}
       <div
-        className="pointer-events-none absolute inset-0 opacity-20"
+        className="hero-orb-a pointer-events-none absolute -left-1/4 top-0 h-[36rem] w-[36rem] opacity-25"
+        style={{ backgroundImage: "var(--intelligence-gradient)", filter: "blur(120px)" }}
+        aria-hidden
+      />
+      <div
+        className="hero-orb-b pointer-events-none absolute -right-1/4 bottom-0 h-[30rem] w-[30rem] opacity-20"
         style={{ backgroundImage: "var(--intelligence-gradient)", filter: "blur(120px)" }}
         aria-hidden
       />
