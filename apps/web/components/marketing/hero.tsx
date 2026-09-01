@@ -40,6 +40,19 @@ export function Hero() {
         <p className="text-sm text-muted-foreground">
           14-day free trial · No hidden credit meters · Cancel anytime
         </p>
+
+        <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
+          {["Morning briefs, on time", "6 executive capabilities", "100% HITL-governed"].map(
+            (stat) => (
+              <span
+                key={stat}
+                className="glass-panel hover-float rounded-full px-4 py-2 text-xs font-medium text-muted-foreground"
+              >
+                {stat}
+              </span>
+            ),
+          )}
+        </div>
       </div>
     </section>
   );

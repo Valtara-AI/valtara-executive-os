@@ -12,7 +12,7 @@ export function FeatureGrid({ items }: { items: FeatureGridItem[] }) {
     <div className="grid gap-6 sm:grid-cols-2">
       {items.map((item, i) => (
         <Reveal key={item.title} delayMs={i * 80}>
-          <div className="flex h-full flex-col gap-3 rounded-lg border border-border bg-background p-6">
+          <div className="glass-panel hover-float flex h-full flex-col gap-3 rounded-lg p-6">
             <item.icon className="h-6 w-6 text-accent" aria-hidden />
             <h3 className="font-display font-semibold">{item.title}</h3>
             <p className="text-sm text-muted-foreground">{item.description}</p>

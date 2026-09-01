@@ -13,8 +13,8 @@ export function PricingTierCard({ tier }: { tier: TierDisplay }) {
   return (
     <div
       className={cn(
-        "flex flex-col gap-6 rounded-lg border p-8",
-        tier.highlighted ? "border-primary bg-background shadow-lg" : "border-border bg-background",
+        "glass-panel hover-float flex flex-col gap-6 rounded-lg p-8",
+        tier.highlighted && "border-primary shadow-lg",
       )}
     >
       <div className="flex items-center justify-between">

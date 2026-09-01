@@ -46,7 +46,7 @@ export function HitlShowcase() {
         <div className="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {STEPS.map((step, i) => (
             <Reveal key={step.title} delayMs={i * 80}>
-              <div className="flex h-full flex-col gap-3 rounded-lg border border-border bg-background p-6">
+              <div className="glass-panel hover-float flex h-full flex-col gap-3 rounded-lg p-6">
                 <step.icon className="h-6 w-6 text-accent" aria-hidden />
                 <h3 className="font-display font-semibold">{step.title}</h3>
                 <p className="text-sm text-muted-foreground">{step.description}</p>

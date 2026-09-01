@@ -63,3 +63,100 @@ body {
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
 }
+
+/* Marketing-page interactive language (marquee/carousel/hover-float/glass) -
+   deliberately pure CSS, no animation library: this codebase's existing
+   motion (Reveal's IntersectionObserver) is already dependency-free per
+   Branding/18-motion-language.md's "polished but static v1" call, and
+   these follow the same principle rather than introducing framer-motion
+   for a handful of effects CSS already does natively. */
+
+@keyframes marquee-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    /* Content is duplicated once in the component, so -50% is exactly one
+       full copy - the loop point is seamless regardless of content width. */
+    transform: translateX(-50%);
+  }
+}
+
+.marquee-track {
+  animation: marquee-scroll var(--marquee-duration, 28s) linear infinite;
+}
+
+.marquee-track:hover,
+.marquee-track:focus-within {
+  animation-play-state: paused;
+}
+
+/* "Liquid Glass": frosted translucency with a soft inner light seam, not
+   just a flat backdrop-blur - the inset highlight (top edge lighter than
+   the rest) is what reads as "glass" rather than "frosted plastic." Two
+   backgrounds layered via background-image so the highlight seam doesn't
+   require an extra DOM node per card. */
+.glass-panel {
+  position: relative;
+  background-color: hsl(var(--background) / 0.55);
+  background-image: linear-gradient(
+    to bottom,
+    hsl(var(--foreground) / 0.06),
+    hsl(var(--foreground) / 0) 40%
+  );
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  border: 1px solid hsl(var(--border) / 0.6);
+  box-shadow:
+    inset 0 1px 0 hsl(var(--foreground) / 0.08),
+    0 8px 30px hsl(var(--foreground) / 0.06);
+}
+
+[data-theme="dark"] .glass-panel {
+  background-color: hsl(var(--background) / 0.35);
+  box-shadow:
+    inset 0 1px 0 hsl(var(--foreground) / 0.12),
+    0 8px 30px hsl(0 0% 0% / 0.35);
+}
+
+/* Sits on top of Reveal's own transform/opacity transition (both animate
+   `transform`, and translate3d composes fine with Reveal's translateY) -
+   the two are designed to stack, not conflict: Reveal handles
+   scroll-in-view, this handles the subsequent hover state once visible. */
+.hover-float {
+  transition:
+    transform 250ms ease-out,
+    box-shadow 250ms ease-out;
+}
+
+.hover-float:hover,
+.hover-float:focus-within {
+  transform: translateY(-6px);
+  box-shadow: 0 16px 40px hsl(var(--foreground) / 0.12);
+}
+
+[data-theme="dark"] .hover-float:hover,
+[data-theme="dark"] .hover-float:focus-within {
+  box-shadow: 0 16px 40px hsl(0 0% 0% / 0.45);
+}
+
+/* Carousel scroll track: native scroll-snap already gives the interaction
+   for free (see carousel.tsx) - this just hides the scrollbar so the
+   Prev/Next buttons are the visible affordance, cross-browser (Firefox's
+   half is the `scrollbarWidth: "none"` inline style in the component,
+   since that property has no Tailwind/CSS-class equivalent). */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track {
+    animation: none;
+  }
+  .hover-float,
+  .hover-float:hover,
+  .hover-float:focus-within {
+    transition: none;
+    transform: none;
+  }
+}
